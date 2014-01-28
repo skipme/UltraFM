@@ -40,6 +40,7 @@
 .icon {
   font-family: 'fontello';
   font-size: 16px;
+  cursor: default;
 }
 
 #connecting {
@@ -100,6 +101,10 @@
   display: inline-block;
   margin: 5px 10px 10px;
   vertical-align: top;
+  padding-top: 20px;
+  padding-bottom: 20px;
+
+  margin-top: -20px;
 }
 
 .player:before {
@@ -116,6 +121,7 @@
 .player .half {
   position: relative;
   background: url('../images/logo-big.png');
+  /*background: url('http://userserve-ak.last.fm/serve/174s/74819290.png');*/
   -moz-box-sizing: border-box;
   display: inline-block;
   width: 50%;
@@ -135,8 +141,11 @@
   background-position: right;
   -moz-transform-origin: left;
   -moz-transition: all .5s;
-  -moz-transform: perspective(500px) rotateY(0deg);
- 
+  -moz-transform: perspective(600px) rotateY(0deg);
+
+  -webkit-transform-origin: left;
+  -webkit-transition: all .5s;
+  -webkit-transform: perspective(600px) rotateY(0deg);
 }
 
 .player .flip.half:after {
@@ -144,10 +153,12 @@
   display: inline-block;
   width: 100%;
   height: 100%;
-  background: -moz-linear-gradient(to right, rgba(63, 63, 63, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
-  background: linear-gradient(to right, rgba(63, 63, 63, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+  background: -moz-linear-gradient(to right, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+  /*background: linear-gradient(to right, rgba(63, 63, 63, 0.65) 0%, rgba(0, 0, 0, 0) 100%);*/
+  /*background: -webkit-linear-gradient(to right, rgba(63, 63, 63, 0.65) 0%, rgba(0, 0, 0, 0) 100%);*/
   opacity: 0;
   -moz-transition: all 0.5s;
+  -webkit-transition: all 0.5s;
   transition: all 0.5s;
 }
 
@@ -155,7 +166,8 @@
   box-shadow: 10px 0 20px rgba(0, 0, 0, 0.3);
   background-size: 200% 100%;
   background-position: right;
-  -moz-transform: perspective(500px) rotateY(-65deg);
+  -moz-transform: perspective(600px) rotateY(-65deg);
+  -webkit-transform: perspective(600px) rotateY(-65deg);
   z-index: 4;
 }
 

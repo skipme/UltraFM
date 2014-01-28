@@ -21,9 +21,9 @@ var Player = {
   start: function() {
     Player.connect();
     Player.audioElement().addEventListener('error', Player.connect);
-    Player.intervalId = setInterval(Player.animate, 150);
+    Player.intervalId = setInterval(Player.animate, 1500);
     Player.fetchSongName();
-    Player.songUpdateIntervalId = setInterval(Player.fetchSongName, 5000);
+    Player.songUpdateIntervalId = setInterval(Player.fetchSongName, 10000);
   },
   stop: function() {
     Player.audioElement().pause();
@@ -71,9 +71,9 @@ var Player = {
     }
   },
   updNowPlaying: function(track) {
-    if (track && Settings.get('scrobbling')['session']['key']) {
-      lastfm.track.updateNowPlaying({artist: track[0], track: track[1]}, {key: Settings.get('scrobbling')['session']['key']}, {});
-    }
+    // if (track && Settings.get('scrobbling')['session']['key']) {
+    //   lastfm.track.updateNowPlaying({artist: track[0], track: track[1]}, {key: Settings.get('scrobbling')['session']['key']}, {});
+    // }
   },
   setVolume: function(value) {
     Player.audioElement().volume = parseInt(value) / 100;
@@ -97,16 +97,18 @@ var playlist = {
     //     playlist.parse(response, responseXML);
     //   }
     // });
-
+    self.port.emit('takexml', destination());
   },
   parse: function (response, responseXML) {
-    if (response) {
+    // if (response) {
+      
+
       var track;
-      if (playlist.parseXml) {
-        track = responseXML.querySelector('track > title').textContent;
-      } else {
-        track = response.split('streamdata">').pop().split('\</td')[0];
-      }
+      // if (playlist.parseXml) {
+        track = _parseXml(responseXML).querySelector('track > title').textContent;
+      // } else {
+      //   track = response.split('streamdata">').pop().split('\</td')[0];
+      // }
 
       if (!Player.currentTrack || track !== Player.currentTrack.origin) {
         Player.previousTrack = (Player.currentTrack ? Player.currentTrack.origin : null);
@@ -114,8 +116,8 @@ var playlist = {
         var oldTrack = (Player.previousTrack ? Player.previousTrack.split(' - ') : null);
         lastfmData.init(newTrack);
 
-        Player.scrobble(oldTrack);
-        Player.updNowPlaying(newTrack);
+        // Player.scrobble(oldTrack); // lastfm
+        // Player.updNowPlaying(newTrack); // lastfm
 
         var encode = function(string) {
           return escape(string.replace(/\s/g, '+'));
@@ -129,10 +131,11 @@ var playlist = {
             lastfm : 'http://last.fm/music/'+encode(newTrack[0])+'/_/'+encode(newTrack[1])
           }
         };
+        Radio.refreshInfo();
       }
-    } else {
-      Player.currentTrack = null;
-    }
+    // } else {
+    //   Player.currentTrack = null;
+    // }
   }
 };
 var lastfmData = {
@@ -146,26 +149,33 @@ var lastfmData = {
     this.fetchCover('track', 2);
   },
   fetchCover: function(type, size) {
-    lastfm[type].getInfo({artist: this.artist, track: this.song}, {
-      success: function (response, responseXML) {
-        if (responseXML) {
-          var coverTag = responseXML.getElementsByTagName("image")[size];
-          if (coverTag && coverTag.textContent) {
-            lastfmData.cover = coverTag.textContent;
-          } else if (type == 'track') {
-            lastfmData.fetchCover('artist', 3);
-          } else {
-            lastfmData.cover = 'images/no_cover.png';
-          }
-          lastfmData.preloadCover();
-        } else {
-          lastfmData.cover = 'images/no_cover.png';
-        }
-      }
-    });
+    if(type == "artist")
+    {
+      self.port.emit('lastfm_artistinfo', {artist: this.artist});
+    }else if(type == "track")
+    {
+      self.port.emit('lastfm_trackinfo', {artist: this.artist, track: this.song});
+    }
+    // lastfm[type].getInfo({artist: this.artist, track: this.song}, {
+    //   success: function (response, responseXML) {
+    //     if (responseXML) {
+    //       var coverTag = responseXML.getElementsByTagName("image")[size];
+    //       if (coverTag && coverTag.textContent) {
+    //         lastfmData.cover = coverTag.textContent;
+    //       } else if (type == 'track') {
+    //         lastfmData.fetchCover('artist', 3);
+    //       } else {
+    //         lastfmData.cover = 'images/no_cover.png';
+    //       }
+    //       lastfmData.preloadCover();
+    //     } else {
+    //       lastfmData.cover = 'images/no_cover.png';
+    //     }
+    //   }
+    // });
   },
   preloadCover: function() {
-    var imageHolder = document.querySelector('img');
+    var imageHolder = document.querySelector("div.half");//'img');
     if (this.cover) {
       imageHolder.style.display = 'none';
       imageHolder.src = lastfmData.cover;
@@ -174,9 +184,43 @@ var lastfmData = {
   }
 };
 
-Settings.default();
-// setTimeout(function(){
-//   if (Player.paused()) {
-//     Player.stop();
-//   }
-// },10000);
+// Settings.default();
+setTimeout(function(){
+  if (Player.paused()) {
+    Player.stop();
+  }
+},2000);
+
+var _parseXml;
+
+if (window.DOMParser) {
+    _parseXml = function(xmlStr) {
+        return ( new window.DOMParser() ).parseFromString(xmlStr, "text/xml");
+    };
+} else if (typeof window.ActiveXObject != "undefined" && new window.ActiveXObject("Microsoft.XMLDOM")) {
+    _parseXml = function(xmlStr) {
+        var xmlDoc = new window.ActiveXObject("Microsoft.XMLDOM");
+        xmlDoc.async = "false";
+        xmlDoc.loadXML(xmlStr);
+        return xmlDoc;
+    };
+} else {
+    _parseXml = function() { return null; }
+}
+
+self.port.on("herexml", function(xml){
+      playlist.parse({}, xml);
+});
+self.port.on("here_trackinfo", function(json){
+     var coverTag = json.track.album.image[2];// size =2
+          if (coverTag && coverTag["#text"]) {
+            lastfmData.cover = coverTag["#text"];
+          } else //if (type == 'track') 
+          {
+            lastfmData.fetchCover('artist', 3);
+          } 
+          // else {
+          //   lastfmData.cover = 'images/no_cover.png';
+          // }
+          lastfmData.preloadCover();
+});

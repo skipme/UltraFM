@@ -2,8 +2,12 @@ body {
   background: #313131;
   color: #ffffff;
   font: 12px/20px "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -webkit-user-select: none;
+  /*font-smoothing: antialiased;*/
+  -moz-user-select: none;
+  /*padding: 6;*/
+  padding-top: 0;
+  /*margin: 0;*/
+  overflow: hidden;
 }
 
 hr {
