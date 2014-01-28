@@ -10,6 +10,7 @@ function XHRequest(options) {
     if (!options['url'] || options['url'].length < 5) {
       throw new Error("Url for XHRequest can't be empty");
     }
+
     set('method', 'GET');
     set('async', false);
     set('success', function(){});
@@ -31,3 +32,4 @@ function XHRequest(options) {
   };
   xhr.send();
 }
+

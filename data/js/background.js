@@ -90,13 +90,14 @@ var playlist = {
     var destination = function() {
       return (playlist.parseXml ? stream().info : stream().domain);
     };
-    new XHRequest({
-      url: destination(),
-      async: true,
-      success: function(response, responseXML) {
-        playlist.parse(response, responseXML);
-      }
-    });
+    // new XHRequest({
+    //   url: destination(),
+    //   async: true,
+    //   success: function(response, responseXML) {
+    //     playlist.parse(response, responseXML);
+    //   }
+    // });
+
   },
   parse: function (response, responseXML) {
     if (response) {
