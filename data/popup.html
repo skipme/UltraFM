@@ -2,16 +2,17 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <link href="/css/generic.css" rel="stylesheet" type="text/css" />
-  <link href="/css/popup.css" rel="stylesheet" type="text/css" />
+  <link href="css/generic.css" rel="stylesheet" type="text/css" />
+  <link href="css/popup.css" rel="stylesheet" type="text/css" />
   <script src="config.json"></script>
-  <script src="/js/settings.js"></script>
-  <script type="text/javascript" src="/js/popup.js"></script>
+  <script src="js/settings.js"></script>
+<script type="text/javascript" src="js/background.js"></script>
+  <script type="text/javascript" src="js/popup.js"></script>
 </head>
 <body>
   <hr>
   <div class="logo">
-    <img src="/images/logo.png" alt="" />
+    <img src="images/logo.png" alt="" />
   </div>
   <hr>
   <div class="player">
@@ -33,8 +34,9 @@
     <p class="song">stopped</p>
   </div>
   <hr>
-  <img id="connecting" src="/images/connecting.gif" alt=""/>
+  <img id="connecting" src="images/connecting.gif" alt=""/>
   <a class="scrobbling" target="_blank"></a>
   </div>
+  <audio preload='metadata'></audio>
 </body>
 </html>

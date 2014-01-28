@@ -35,7 +35,7 @@ var Player = {
       Player.scrobble([Player.currentTrack.artist, Player.currentTrack.song]);
       Player.currentTrack = null;
     }
-    chrome.browserAction.setBadgeText({text:''});
+    // chrome.browserAction.setBadgeText({text:''});
   },
   paused: function() {
     return Player.audioElement().paused;
@@ -55,7 +55,7 @@ var Player = {
     else{
       Player.counter = 0;
     }
-    chrome.browserAction.setBadgeText({text:animation[Player.counter]});
+    // chrome.browserAction.setBadgeText({text:animation[Player.counter]});
   },
   fetchSongName: function() {
     playlist.parseXml = true;
@@ -154,11 +154,11 @@ var lastfmData = {
           } else if (type == 'track') {
             lastfmData.fetchCover('artist', 3);
           } else {
-            lastfmData.cover = '/images/no_cover.png';
+            lastfmData.cover = 'images/no_cover.png';
           }
           lastfmData.preloadCover();
         } else {
-          lastfmData.cover = '/images/no_cover.png';
+          lastfmData.cover = 'images/no_cover.png';
         }
       }
     });
