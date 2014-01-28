@@ -1,0 +1,1 @@
+cfx run -p"C:\Users\USER\AppData\Roaming\Mozilla\Firefox\Profiles\YDEV"
