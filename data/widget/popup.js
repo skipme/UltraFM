@@ -119,8 +119,10 @@ var Radio = {
       Radio.volume.bar  = document.querySelector('.volume input');
       Radio.volume.icon = document.querySelector('.volume .icon');
       Radio.volume.loadSettings();
+
       Radio.volume.setIcon(Radio.volume.bar.value);
       Radio.volume.muted ? Radio.volume.mute() : '';
+
       Radio.volume.bar.onchange = function(e) {
         var currentVolume = e.target.value;
         Radio.volume.storeParam('value', currentVolume);
@@ -135,7 +137,7 @@ var Radio = {
       }
     },
     loadSettings: function() {
-      var settings = Settings.get('volume');
+      var settings = {};//Settings.get('volume');
       Radio.volume.muted = settings['muted'];
       Radio.volume.bar.value = settings['value'];
       if (settings['muted']) {
@@ -152,9 +154,9 @@ var Radio = {
       }
     },
     setIcon: function(value) {
-      var value = parseInt(value);
+      var ivalue = parseInt(value);
       var states = Radio.volume.states;
-      Radio.volume.icon.innerHTML = (value > 60 ? states.max : (value > 0 ? states.mid : states.min));
+      Radio.volume.icon.innerHTML = (ivalue > 60 ? states.max : (ivalue > 0 ? states.mid : states.min));
     },
     mute: function() {
       Radio.volume.old.value = Radio.volume.bar.value;
@@ -169,11 +171,12 @@ var Radio = {
       Radio.volume.bar.classList.remove('disabled');
     },
     storeParam: function(key, value) {
-      var settings = Settings.get('volume');
-      settings[key] = value;
-      Settings.set('volume', settings, true);
+      // var settings = Settings.get('volume');
+      // settings[key] = value;
+      // Settings.set('volume', settings, true);
     }
   }
 };
 
-setTimeout(Radio.init, 0);
+// setTimeout(Radio.init, 0);
+Radio.init();

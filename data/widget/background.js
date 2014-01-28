@@ -185,11 +185,11 @@ var lastfmData = {
 };
 
 // Settings.default();
-setTimeout(function(){
-  if (Player.paused()) {
-    Player.stop();
-  }
-},2000);
+// setTimeout(function(){
+//   if (Player.paused()) {
+//     Player.stop();
+//   }
+// },2000);
 
 var _parseXml;
 
@@ -212,15 +212,29 @@ self.port.on("herexml", function(xml){
       playlist.parse({}, xml);
 });
 self.port.on("here_trackinfo", function(json){
-     var coverTag = json.track.album.image[2];// size =2
+        if(typeof json.error !== "undefined")
+        {
+           lastfmData.fetchCover('artist', 3);
+          return;
+        }
+         var coverTag = json.track.album.image[2];// size =2
           if (coverTag && coverTag["#text"]) {
             lastfmData.cover = coverTag["#text"];
-          } else //if (type == 'track') 
+          } else
           {
             lastfmData.fetchCover('artist', 3);
           } 
-          // else {
-          //   lastfmData.cover = 'images/no_cover.png';
-          // }
+
+          lastfmData.preloadCover();
+});
+self.port.on("here_artistinfo", function(json){
+        if(typeof json.error !== "undefined")
+        {
+          return;
+        }
+         var coverTag = json.artist.image[2];// size =2
+          if (coverTag && coverTag["#text"]) {
+            lastfmData.cover = coverTag["#text"];
+          }
           lastfmData.preloadCover();
 });

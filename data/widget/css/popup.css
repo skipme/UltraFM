@@ -70,8 +70,8 @@
   border-top: 1px solid #CCC;
   border-bottom: 1px solid #CCC;
   margin: 5px 0 15px 0;
-  float: left;
-  margin-left: 6pt
+  float: right;
+  margin-right: 6pt
 }
 
 .volume input[type="range"]::-moz-range-thumb {
