@@ -90,13 +90,6 @@ var playlist = {
     var destination = function() {
       return (playlist.parseXml ? stream().info : stream().domain);
     };
-    // new XHRequest({
-    //   url: destination(),
-    //   async: true,
-    //   success: function(response, responseXML) {
-    //     playlist.parse(response, responseXML);
-    //   }
-    // });
     self.port.emit('takexml', destination());
   },
   parse: function (response, responseXML) {
@@ -146,7 +139,7 @@ var lastfmData = {
   init: function (trackArray) {
     this.artist = trackArray[0];
     this.song   = trackArray[1];
-    this.fetchCover('track', 2);
+    this.fetchCover('track');
   },
   fetchCover: function(type, size) {
     if(type == "artist")
@@ -156,23 +149,6 @@ var lastfmData = {
     {
       self.port.emit('lastfm_trackinfo', {artist: this.artist, track: this.song});
     }
-    // lastfm[type].getInfo({artist: this.artist, track: this.song}, {
-    //   success: function (response, responseXML) {
-    //     if (responseXML) {
-    //       var coverTag = responseXML.getElementsByTagName("image")[size];
-    //       if (coverTag && coverTag.textContent) {
-    //         lastfmData.cover = coverTag.textContent;
-    //       } else if (type == 'track') {
-    //         lastfmData.fetchCover('artist', 3);
-    //       } else {
-    //         lastfmData.cover = 'images/no_cover.png';
-    //       }
-    //       lastfmData.preloadCover();
-    //     } else {
-    //       lastfmData.cover = 'images/no_cover.png';
-    //     }
-    //   }
-    // });
   },
   preloadCover: function() {
     var imageHolder = document.querySelector("div.half");//'img');
@@ -212,29 +188,39 @@ self.port.on("herexml", function(xml){
       playlist.parse({}, xml);
 });
 self.port.on("here_trackinfo", function(json){
-        if(typeof json.error !== "undefined")
+        if(typeof json.error !== "undefined" 
+          || json.track === "undefined" || json.track.album === "undefined")
         {
-           lastfmData.fetchCover('artist', 3);
-          return;
+           lastfmData.fetchCover('artist');
+           return;
         }
-         var coverTag = json.track.album.image[2];// size =2
-          if (coverTag && coverTag["#text"]) {
-            lastfmData.cover = coverTag["#text"];
-          } else
-          {
-            lastfmData.fetchCover('artist', 3);
-          } 
+        var coverTag = retrieveCover(json.track.album.image, 3);
+        if (coverTag && coverTag["#text"]) {
+          lastfmData.cover = coverTag["#text"];
+        } else
+        {
+          lastfmData.fetchCover('artist');
+        } 
 
-          lastfmData.preloadCover();
+        lastfmData.preloadCover();
 });
 self.port.on("here_artistinfo", function(json){
-        if(typeof json.error !== "undefined")
+        if(typeof json.error !== "undefined"
+          || json.artist === "undefined")
         {
           return;
         }
-         var coverTag = json.artist.image[2];// size =2
-          if (coverTag && coverTag["#text"]) {
-            lastfmData.cover = coverTag["#text"];
-          }
-          lastfmData.preloadCover();
+        var coverTag = retrieveCover(json.artist.image, 3);
+        if (coverTag && coverTag["#text"]) {
+          lastfmData.cover = coverTag["#text"];
+        }
+        lastfmData.preloadCover();
 });
+function retrieveCover(arrayCovers, predefIndex)
+{
+  if(arrayCovers.length <= predefIndex)
+    predefIndex = arrayCovers.length -1;
+  if(predefIndex < 0)
+    return arrayCovers.length === 0 ? null : arrayCovers[0];
+  return arrayCovers[predefIndex];
+}
