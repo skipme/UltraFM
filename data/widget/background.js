@@ -3,8 +3,8 @@ var stream = function() {
   var flow   = '/ultra-128.mp3';
   return {
     domain : domain,
-    url    : domain+flow,
-    info   : domain+flow+'.xspf'
+    url    : domain+flow, // etn: http://ch1relay1.etn.fm:8110/stream
+    info   : domain+flow+'.xspf' // etn: http://24.249.116.122:8100/currentsong?sid=1
   };
 };
 
@@ -29,13 +29,14 @@ var Player = {
   },
   stop: function() {
     Player.audioElement().pause();
-    Player.audioElement().removeEventListener('error', Player.connect, false);
-    Player.audioElement().src = null;
-    clearInterval(Player.intervalId);
+    Player.audioElement().removeAttribute("src");
+    // Player.audioElement().removeEventListener('error', Player.connect, false);
+    // Player.audioElement().src = null;
+    // clearInterval(Player.intervalId);
     clearInterval(Player.songUpdateIntervalId);
     if (Player.currentTrack) {
-      Player.scrobble([Player.currentTrack.artist, Player.currentTrack.song]);
-      Player.currentTrack = null;
+      // Player.scrobble([Player.currentTrack.artist, Player.currentTrack.song]);
+      // Player.currentTrack = null;
     }
     // chrome.browserAction.setBadgeText({text:''});
   },
@@ -50,7 +51,7 @@ var Player = {
       return lastfmData.imgComplete;
   },
   connect: function() {
-    Player.audioElement().src = stream().url+'?nocache='+Math.floor(Math.random() * 100000);
+    Player.audioElement().src = stream().url;//+'?nocache='+Math.floor(Math.random() * 100000);
     Player.radioPlaying = false;
     Player.audioElement().onplaying = function()
     {
