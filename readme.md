@@ -6,3 +6,5 @@ Tiny extention that allows you to listen UltraFM(radioultra.ru) from Firefox bro
 ## Screenshots
 ![image](/screenshots/01.png) 
 ![image](/screenshots/02.png) 
+
+* used tracks font [fontfabric](http://fontfabric.com/) 

@@ -69,6 +69,8 @@ var Player = {
     {
       console.log("audio error...")
       Player.radioPlaying = false;
+
+      Radio.changeState('stop');
       Radio.refreshInfo();
     };
     Player.audioElement().play();

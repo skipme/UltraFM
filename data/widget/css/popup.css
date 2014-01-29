@@ -8,7 +8,20 @@
   font-weight: normal;
   font-style: normal;
 }
-
+@font-face {
+  font-family: 'track';
+  src: url('../font/Track.ttf');
+  src: url('../font/Track.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'track';
+  src: url('../font/Track Italic.ttf');
+  src: url('../font/Track Italic.ttf') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+}
 .track-info {
   width: 100%;
   max-width: 220px;
@@ -17,6 +30,7 @@
   border-radius: 10px;
   overflow: hidden;
   clear: both;
+  font-family: 'track';
 }
 
 .artist {
@@ -29,12 +43,13 @@
 }
 
 .song {
-  font: italic 14px/22px Georgia, serif;
+  /*font: italic 14px/22px Georgia, serif;*/
+  font: italic 12px/22px track;
   margin: 0;
   padding: 3px 0;
   color: #333;
   border-top: 1px solid rgba(255, 255, 255, 0.5);
-  text-shadow: 1px 1px 0 white;
+  text-shadow: 2px 2px 0 white;
 }
 
 .icon {

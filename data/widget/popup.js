@@ -93,16 +93,17 @@ var Radio = {
     }
   },
   initScrobbleLink: function() {
-    var scrobbling = Settings.get('scrobbling');
-    var lastfmConf = CONFIG['lastFM'];
-    var scrobbleLink = document.querySelector('.scrobbling');
-    if (scrobbling['enabled']) {
-      scrobbleLink.href = 'http://last.fm/user/'+scrobbling['session']['name'];
-      scrobbleLink.innerText = 'Scrobbled as: ' + scrobbling['session']['name'];
-    } else {
-      scrobbleLink.href = lastfmConf['authUri']+lastfmConf['key'];
-      scrobbleLink.innerText = 'Turn on scrobbling?';
-    }
+    return;
+    // var scrobbling = Settings.get('scrobbling');
+    // var lastfmConf = CONFIG['lastFM'];
+    // var scrobbleLink = document.querySelector('.scrobbling');
+    // if (scrobbling['enabled']) {
+    //   scrobbleLink.href = 'http://last.fm/user/'+scrobbling['session']['name'];
+    //   scrobbleLink.innerText = 'Scrobbled as: ' + scrobbling['session']['name'];
+    // } else {
+    //   scrobbleLink.href = lastfmConf['authUri']+lastfmConf['key'];
+    //   scrobbleLink.innerText = 'Turn on scrobbling?';
+    // }
   },
   volume: {
     bar  : null,
