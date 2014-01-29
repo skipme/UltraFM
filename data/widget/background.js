@@ -15,13 +15,15 @@ var Player = {
   previousTrack: '',
   songUpdateIntervalId: 0,
 
+  radioPlaying: false,
+
   audioElement: function() {
     return document.querySelector('audio');
   },
   start: function() {
     Player.connect();
-    Player.audioElement().addEventListener('error', Player.connect);
-    Player.intervalId = setInterval(Player.animate, 1500);
+    // Player.audioElement().addEventListener('error', Player.connect);
+    // Player.intervalId = setInterval(Player.animate, 1500);
     Player.fetchSongName();
     Player.songUpdateIntervalId = setInterval(Player.fetchSongName, 10000);
   },
@@ -43,8 +45,31 @@ var Player = {
   currentTime: function() {
     return Player.audioElement().currentTime;
   },
+  coverLoaded: function() {
+    console.log("cover loaded", lastfmData.imgComplete)
+      return lastfmData.imgComplete;
+  },
   connect: function() {
     Player.audioElement().src = stream().url+'?nocache='+Math.floor(Math.random() * 100000);
+    Player.radioPlaying = false;
+    Player.audioElement().onplaying = function()
+    {
+      console.log("audio playing...")
+      Player.radioPlaying = true;
+      Radio.refreshInfo();
+    };
+    Player.audioElement().onwaiting = function()
+    {
+      console.log("audio waiting...")
+      Player.radioPlaying = false;
+      Radio.refreshInfo();
+    };
+    Player.audioElement().onerror= function()
+    {
+      console.log("audio error...")
+      Player.radioPlaying = false;
+      Radio.refreshInfo();
+    };
     Player.audioElement().play();
   },
   animate: function() {
@@ -62,7 +87,7 @@ var Player = {
     playlist.download();
   },
   cover: function() {
-    return lastfmData.cover;
+    return lastfmData.coverImageUrl();
   },
   scrobble: function(track) {
     if (track && Settings.get('scrobbling')['session']['key']) {
@@ -135,6 +160,10 @@ var lastfmData = {
   artist  : null,
   song    : null,
   cover   : null,
+  img: null,
+
+  imgComplete: false,
+  imgCompleteUrl: null,
 
   init: function (trackArray) {
     this.artist = trackArray[0];
@@ -150,12 +179,29 @@ var lastfmData = {
       self.port.emit('lastfm_trackinfo', {artist: this.artist, track: this.song});
     }
   },
+  coverImageUrl: function(){
+    if (this.imgComplete) {
+      return this.imgCompleteUrl;
+    }
+    return null;
+  },
   preloadCover: function() {
-    var imageHolder = document.querySelector("div.half");//'img');
+    // var imageHolder = document.querySelector("div.half");
     if (this.cover) {
-      imageHolder.style.display = 'none';
-      imageHolder.src = lastfmData.cover;
-      imageHolder.style.display = 'block';
+
+      if(this.img !== null &&  typeof this.img !== 'undefined')
+        delete this.img;
+
+      this.img = new Image(); 
+      
+
+      this.img.onload = function(){
+         lastfmData.imgComplete = true;
+         lastfmData.imgCompleteUrl = lastfmData.img.src;
+         Radio.refreshInfo();
+      };
+      this.imgComplete = false;
+      this.img.src = this.cover;
     }
   }
 };
@@ -189,7 +235,8 @@ self.port.on("herexml", function(xml){
 });
 self.port.on("here_trackinfo", function(json){
         if(typeof json.error !== "undefined" 
-          || json.track === "undefined" || json.track.album === "undefined")
+          || typeof json.track === "undefined" 
+          || typeof json.track.album === "undefined")
         {
            lastfmData.fetchCover('artist');
            return;
@@ -206,7 +253,7 @@ self.port.on("here_trackinfo", function(json){
 });
 self.port.on("here_artistinfo", function(json){
         if(typeof json.error !== "undefined"
-          || json.artist === "undefined")
+          || typeof json.artist === "undefined")
         {
           return;
         }

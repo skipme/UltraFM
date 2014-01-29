@@ -61,10 +61,10 @@ var Radio = {
   setClass: function() {
     if (Radio.Player.paused()) {
       Radio.buttons.play.classList.remove('active');
-      clearInterval(Radio.refreshInfoId);
+      // clearInterval(Radio.refreshInfoId);
       Radio.refreshInfo();
     } else {
-      Radio.refreshInfoId = setInterval(Radio.refreshInfo,1000);
+      // Radio.refreshInfoId = setInterval(Radio.refreshInfo,1000);
       Radio.buttons.play.classList.add('active');
     }
   },
@@ -72,19 +72,21 @@ var Radio = {
     if (Radio.Player.paused()) {
       Radio.track.artist.innerText = "UltraFM";
       Radio.track.song.innerText   = "stopped";
-      Radio.track.cover[0].style.backgroundImage = 'url(images/logo-big.png)';
-      Radio.track.cover[1].style.backgroundImage = 'url(images/logo-big.png)';
+      Radio.track.cover[0].style.backgroundImage = 'url("images/logo-big.png")';
+      Radio.track.cover[1].style.backgroundImage = 'url("images/logo-big.png")';
       Radio.buttons.vk.removeAttribute('href');
       Radio.buttons.lastfm.removeAttribute('href');
       Radio.connAnimation.style.display = 'none';
     } else {
-      Radio.connAnimation.style.display = (Radio.Player.currentTime() ? 'none':'block');
+      Radio.connAnimation.style.display = ((/*Radio.Player.currentTime()*/Player.radioPlaying && Radio.Player.coverLoaded()) ? 'none':'block');
       var currentTrack = Radio.Player.currentTrack;
       if (currentTrack) {
         Radio.track.artist.innerHTML = currentTrack.artist;
         Radio.track.song.innerHTML   = currentTrack.song;
-        Radio.track.cover[0].style.backgroundImage = 'url('+Radio.Player.cover()+')';
-        Radio.track.cover[1].style.backgroundImage = 'url('+Radio.Player.cover()+')';
+        var coverUrl = (Radio.Player.coverLoaded()? Radio.Player.cover() : "images/logo-big.png");
+        console.log(coverUrl);
+        Radio.track.cover[0].style.backgroundImage = 'url("'+coverUrl+'")';
+        Radio.track.cover[1].style.backgroundImage = 'url("'+coverUrl+'")';
         Radio.buttons.vk.setAttribute('href', currentTrack.links.vk);
         Radio.buttons.lastfm.setAttribute('href', currentTrack.links.lastfm);
       }
