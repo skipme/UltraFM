@@ -21,6 +21,7 @@ var Player = {
     return document.querySelector('audio');
   },
   start: function() {
+    lastfmData.clearState();
     Player.connect();
     // Player.audioElement().addEventListener('error', Player.connect);
     // Player.intervalId = setInterval(Player.animate, 1500);
@@ -38,6 +39,7 @@ var Player = {
       // Player.scrobble([Player.currentTrack.artist, Player.currentTrack.song]);
       // Player.currentTrack = null;
     }
+
     // chrome.browserAction.setBadgeText({text:''});
   },
   paused: function() {
@@ -121,16 +123,7 @@ var playlist = {
     self.port.emit('takexml', destination());
   },
   parse: function (response, responseXML) {
-    // if (response) {
-      
-
-      var track;
-      // if (playlist.parseXml) {
-        track = _parseXml(responseXML).querySelector('track > title').textContent;
-      // } else {
-      //   track = response.split('streamdata">').pop().split('\</td')[0];
-      // }
-
+      var track = _parseXml(responseXML).querySelector('track > title').textContent;
       if (!Player.currentTrack || track !== Player.currentTrack.origin) {
         Player.previousTrack = (Player.currentTrack ? Player.currentTrack.origin : null);
         var newTrack = track.split(" - ");
@@ -153,10 +146,9 @@ var playlist = {
           }
         };
         Radio.refreshInfo();
+      }else {
+        lastfmData.preloadCover();
       }
-    // } else {
-    //   Player.currentTrack = null;
-    // }
   }
 };
 var lastfmData = {
@@ -206,6 +198,10 @@ var lastfmData = {
       this.imgComplete = false;
       this.img.src = this.cover;
     }
+  },
+  clearState: function() {
+    this.imgComplete = false;
+    this.imgCompleteUrl = null;
   }
 };
 

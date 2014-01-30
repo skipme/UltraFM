@@ -78,7 +78,7 @@ var Radio = {
       Radio.buttons.lastfm.removeAttribute('href');
       Radio.connAnimation.style.display = 'none';
     } else {
-      Radio.connAnimation.style.display = ((/*Radio.Player.currentTime()*/Player.radioPlaying && Radio.Player.coverLoaded()) ? 'none':'block');
+      Radio.connAnimation.style.display = ((Player.radioPlaying && Radio.Player.coverLoaded()) ? 'none':'block');
       var currentTrack = Radio.Player.currentTrack;
       if (currentTrack) {
         Radio.track.artist.innerHTML = currentTrack.artist;
