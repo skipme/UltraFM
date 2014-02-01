@@ -564,7 +564,7 @@
 			{
 				setTimeout(function(){portMocking.responseLastFMScrobble(200);}, 2000);
 			}else{
-
+				self.port.emit('lastfm_scrobble', {track: track, artist: artist});
 			}
 		},
 		responseLastFMScrobble: function(status) {
@@ -578,12 +578,15 @@
 			{
 				// console.log("beep");
 			}else{
-
+				self.port.emit('beep', {});
 			}
 		},
 
 		requestForLastFMSession: function(){
-			self.port.emit('createLastFMSession', {});
+			if(useMocking)
+				return;
+			else
+				self.port.emit('createLastFMSession', {});
 		},
 
 		requestXSPF: function(){
@@ -611,13 +614,15 @@
 '  </trackList>',
 '</playlist>'].join(''));}, 2000);
 
+			}else{
+				self.port.emit('loadXSPF', {});
 			}
 		},
 		responseXSPF: function(status, data){
 			console.log("xspf port response", status);
 			XSPF.portXSPF(status, data);
 		},
-		requestLastFMArtist: function(){
+		requestLastFMArtist: function(artist){
 			if(this.useMocking)
 			{
 				setTimeout(function(){
@@ -650,13 +655,15 @@
 						  }
 						});
 				}, 2000);
+			}else{
+				self.port.emit('lastfm_artistinfo', {artist: artist});
 			}
 		},
 		responseLastFMArtist: function(status, data){
 			console.log("LastFM Artist port response", status);
 			LastFM.portArtist(status, data);
 		},
-		requestLastFMTrack: function(){
+		requestLastFMTrack: function(artist, track){
 			if(this.useMocking)
 			{
 				setTimeout(function(){
@@ -709,6 +716,8 @@
 						  }
 						});
 				}, 2000);
+			}else{
+				self.port.emit('lastfm_trackinfo', {artist: artist, track: track});
 			}
 		},
 		responseLastFMTrack: function(status, data){
@@ -727,6 +736,18 @@
 	{
 		self.port.on("LastFMStatus", function(obj){
 			portMocking.portLastFMStatus(obj);
+		});
+		self.port.on("lastfm_scrobble", function(obj){
+			portMocking.responseLastFMScrobble(obj.code, obj.data);
+		});
+		self.port.on("here_xspf", function(obj){
+			portMocking.responseXSPF(obj.code, obj.data);
+		});
+		self.port.on("lastfm_trackinfo", function(obj){
+			portMocking.responseLastFMTrack(obj.code, obj.data);
+		});
+		self.port.on("lastfm_artistinfo", function(obj){
+			portMocking.responseLastFMArtist(obj.code, obj.data);
 		});
 	}
 
