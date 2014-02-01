@@ -3,7 +3,9 @@
 	var Player = {
 		
 		state: {
+			volumeLevel: 0,
 			streamSource: null,
+			isMute: false,
 			ensureSource: function(){
 				if(typeof this.streamSource === 'undefined' || 
 					this.streamSource === null)
@@ -101,7 +103,12 @@
 			this.state.stopped();
 		},
 		setVolume: function(val){
-
+			this.state.audioElement.volume = parseInt(val) * .01;
+			this.state.volumeLevel = parseInt(val);
+		},
+		setMute: function(mute){
+			this.state.audioElement.muted = mute;
+			this.state.isMute = mute;
 		},
 		isPlaying: function (){
 			return this.state.playingStream;
@@ -291,7 +298,7 @@
 		allowedLASTFMoption: true,
 		
 		isVisible: false,
-		timer_Trackinfo: false,
+		timer_Trackinfo: -1,
 		trackMetaInformation: {
 			artist: '',
 			title: '',
@@ -336,7 +343,7 @@
 				}
 			},
 			setDefaultCover: function(){
-				this.coverUrl = "images/logo-big.png";
+				this.coverUrl = "http://userserve-ak.last.fm/serve/300x300/93524263.png";//images/logo-big.png";
 			},
 			setDefaultTitle: function(){
 				this.title = 'stopped';
@@ -384,6 +391,10 @@
 			setCoverUrl: function(url){
 				this.cover[0].style.backgroundImage = 'url("'+url+'")';
         		this.cover[1].style.backgroundImage = 'url("'+url+'")';
+			},
+			appearVolumeIcon: function(){
+				var ivalue = Player.state.volumeLevel;
+				this.volume_icon.innerHTML = _escapeHTML(String(ivalue > 60 ? 6 : (ivalue > 0 ? 5: 4)));
 			}
 		},
 		isRadioBusy: function(){
@@ -397,6 +408,7 @@
 			this.buttons.assignButtons();
 			this.elements.assignElements();
 			this.assignEvents();
+			this.setVolume(70);
 		},
 		deferUpdateUi: function(){
 			setTimeout(function(){uiRadio.updateUI();}, 0);
@@ -408,8 +420,14 @@
 			var s = Player.state;
 			this.buttons.togglePlayButton(Player.isPlaying() || Player.isWaiting());
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
+			if(!Player.isPlaying())
+			{
+				this.trackMetaInformation.setDefaultTitle();
+				this.trackMetaInformation.setDefaultCover();
+			}
 			this.elements.setTitle(this.trackMetaInformation.artist, this.trackMetaInformation.title);
 			this.elements.setCoverUrl(this.trackMetaInformation.coverUrl);
+
 		},
 		updateUIBusy: function(){
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
@@ -418,20 +436,20 @@
 			this.elements.volume_bar.
 				addEventListener("change", function(e) {
 					var currentVolume = e.target.value;
-					Player.setVolume(currentVolume);
+					uiRadio.setVolume(currentVolume, true);
 				});
-			this.buttons.play.
+			this.buttons.play. // PLAY
 				addEventListener("click", function(e) {
-					if(uiRadio.isRadioBusy() || Player.isPlaying())
+					if(Player.isWaiting() || Player.isPlaying())
 					{
 						console.log("radio is busy")
 						return;
 					}
 					Player.play();
 				});
-			this.buttons.stop.
+			this.buttons.stop. // STOP
 				addEventListener("click", function(e) {
-					if(Player.isPlaying())
+					if(Player.isPlaying() || Player.isWaiting())
 						Player.stop();
 				});
 
@@ -452,9 +470,11 @@
 		},
 		someStateChange: function(){
 			uiRadio.deferUpdateUi();
+			portMocking.requestBeep();
 		},
 		busyStateChange: function(){
 			uiRadio.deferUpdateUiBusy();
+			portMocking.requestBeep();
 		},
 		updateTrackInfo: function(){
 			if(!this.isVisible)
@@ -478,6 +498,8 @@
 		checkPeriodicTrackInfoUpdate: function(){
 			if(Player.isPlaying())
 			{
+				if(uiRadio.timer_Trackinfo !== -1)
+					clearInterval(uiRadio.timer_Trackinfo);
 				uiRadio.timer_Trackinfo = setInterval(function(){
 					uiRadio.updateTrackInfo();
 				}, 10000);
@@ -486,11 +508,32 @@
 				}, 0);
 			}else{
 				clearInterval(uiRadio.timer_Trackinfo);
+				uiRadio.timer_Trackinfo = -1;
 			}
+		},
+		setVolume: function(level, frombar){
+			if(!frombar)
+				this.elements.volume_bar.value = level;
+			Player.setVolume(level);
+			this.elements.appearVolumeIcon();
 		}
 	};
 	var portMocking = {
 		useMocking: true,
+
+		requestBeep: function(){
+			if(this.useMocking)
+			{
+
+			}else{
+
+			}
+		},
+
+		requestForLastFMSession: function(){
+
+		},
+
 		requestXSPF: function(){
 			if(this.useMocking)
 			{
@@ -619,10 +662,16 @@
 		responseLastFMTrack: function(status, data){
 			console.log("LastFM Track port response", status);
 			LastFM.portTrack(status, data);
+		},
+
+		portLastFMStatus: function(state){
+			// uiRadio set status string
+			// allow
 		}
 	};
+
+	Player.initialise();
 	uiRadio.initialise();
-    Player.initialise();
     uiRadio.isVisible = true;
   //   Player.setStateChangeCallback(function(s){
 		// console.log("schange: ", s.stateString());
