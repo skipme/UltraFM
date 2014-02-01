@@ -271,12 +271,12 @@
 			this.loadingCallback = onLoad;
 			portMocking.requestXSPF();
 		},
-		parseXSPFdata: function(string){
-			var xspf = _parseXml(string);
+		parseXSPFdata: function(xmlstring){
+			var xspf = _parseXml(xmlstring);
 			var track_e = xspf.querySelector('track > title');
 
-			if(typeof track_e == "undefined")
-				return;
+			if(track_e === null || typeof track_e === "undefined")
+				return this.secondTryParseXSPFdata(xmlstring);
 			try {
 				var track = track_e.textContent;
 				var artistAndTitle = track.split(" - ");
@@ -285,6 +285,23 @@
 			}catch(e){
 				console.warn("can't parse xspf data");
 			}
+			return null;
+		},
+		secondTryParseXSPFdata: function(xmlstring)
+		{
+			var iofleft = xmlstring.indexOf("<title>");
+			var iofright = xmlstring.indexOf("</title>");
+			if(iofright >= 0 && iofleft >= 0)
+			{
+				try{
+				var tracks = xmlstring.substring(iofleft +7, iofright);
+				var artistAndTitle = tracks.split(" - ");
+				return {artist: artistAndTitle[0], title: artistAndTitle[1]};
+				}catch(e){
+					return null;
+				}
+			}else
+			 return null;
 		},
 		portXSPF: function(status, data){
 			this.loadingXSPF = false;
@@ -329,7 +346,7 @@
 		}
     	else console.error("trying to invoke inconsistent function", foo);
     };
-    function _escapeHTML(str) str.replace(/[&"<>]/g, function (m) escapeHTML.replacements[m]);
+    function _escapeHTML(str) str.replace(/[&"<>]/g, function (m) _escapeHTML.replacements[m]);
 	_escapeHTML.replacements = { "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" };
 
 	var uiRadio = {
@@ -549,7 +566,13 @@
 				XSPF.getXSPFdata(function(status, data){
 					if(status === 200)
 					{
-						uiRadio.trackMetaInformation.setTitle(data.artist, data.title);
+						if(data === null || data.error)
+						{
+							uiRadio.trackMetaInformation.setDefaultTitle();
+							uiRadio.trackMetaInformation.setDefaultCover();
+						}
+						else
+							uiRadio.trackMetaInformation.setTitle(data.artist, data.title);
 						uiRadio.deferUpdateUi();
 					}else{
 						if(data.error)
@@ -633,7 +656,7 @@
 '  <trackList>',
 '    <track>',
 '      <location>http://94.25.53.131:80/ultra-128.mp3</location>',
-'      <title>KoRn - Never Never</title>',
+'      <title>10 Years - Actions & Motives</title>',
 '      <annotation>Stream Title: Radio ULTRA Online',
 'Stream Description: Radio ULTRA Online',
 'Content Type:audio/mpeg',
