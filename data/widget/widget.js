@@ -224,11 +224,12 @@
 			_callQuasiFunction(this.onStateChange, null);
 
 			if( typeof data.artist !== "undefined" && 
-				typeof data.image !== "undefined" )
+				typeof data.artist.image !== "undefined" )
 			{
 				data = (status === 200? {url: this.retrieveCover(data.artist.image, 3)}: {error: 1});
-				_callQuasiFunction(this.loadingCallback, null, status, data);
-			}
+			}else data = {error: -1};
+			// make sure we informed radio in order to cover update 
+			_callQuasiFunction(this.loadingCallback, null, status, data);
 		},
 		retrieveCover: function (arrayCovers, predefIndex)
 		{
