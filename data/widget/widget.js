@@ -168,8 +168,11 @@
 		}
 	};
 	var LastFM = {
+		state: {username: null},
+
 		loadingCallback: null,
 		loadingCover: false,
+		requestScrobble: false,
 
 		onStateChange: null,
 		trackRequest: null,
@@ -217,6 +220,16 @@
 		  if(predefIndex < 0)
 		    return arrayCovers.length === 0 ? null : arrayCovers[0]["#text"];
 		  return arrayCovers[predefIndex]["#text"];
+		},
+		scrobble: function(artist, track)
+		{
+			this.requestScrobble = true;
+			_callQuasiFunction(this.onStateChange, null);
+			portMocking.requestLastFMScrobble(artist, track);
+		},
+		portScrobble: function(){
+			this.requestScrobble = false;
+			_callQuasiFunction(this.onStateChange, null);
 		}
 	};
 
@@ -296,7 +309,8 @@
 		allowedM3Uoption: false,
 		allowedXSPFoption: true,
 		allowedLASTFMoption: true,
-		
+		allowedLASTFMSCROBBLEoption: false,
+
 		isVisible: false,
 		timer_Trackinfo: -1,
 		trackMetaInformation: {
@@ -373,6 +387,9 @@
 			artist: null,
 			song: null,
 			cover: null,
+			lastfmsessLink: null,
+			lastfmUser: null,
+
 			assignElements: function(){
 				this.busyAnimation = document.getElementById('connecting');
 		        this.volume_bar  = document.querySelector('.volume input');
@@ -380,6 +397,8 @@
 	      		this.artist = document.getElementsByClassName("artist")[0];
 				this.song   = document.getElementsByClassName("song")[0];
       			this.cover  = document.getElementsByClassName("half");
+      			this.lastfmsessLink = document.getElementById('createLastFMSession');
+      			this.lastfmUser = document.getElementById('lastfm-user');
 			},
 			toggleBusyAnimation: function(show){
 				this.busyAnimation.style.display = (show? 'block' : 'none');
@@ -395,11 +414,21 @@
 			appearVolumeIcon: function(){
 				var ivalue = Player.state.volumeLevel;
 				this.volume_icon.innerHTML = _escapeHTML(String(ivalue > 60 ? 6 : (ivalue > 0 ? 5: 4)));
+			},
+			updateScrobbleInfo: function(enabled, username)
+			{
+				var d = new Date();
+				var curr_hour = d.getHours();
+				var curr_min = d.getMinutes();
+
+				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соеденено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
+				this.lastfmUser.innerHTML = _escapeHTML(username);
 			}
 		},
 		isRadioBusy: function(){
 			return Player.isWaiting() || 
-			XSPF.loadingXSPF || LastFM.loadingCover|| CoverImageLoader.loadingCoverImage;
+			XSPF.loadingXSPF || LastFM.loadingCover|| CoverImageLoader.loadingCoverImage ||
+			LastFM.requestScrobble;
 		},
 		getCover: function (artist, album, onLoad){
 			this.callback = onLoad;
@@ -463,6 +492,10 @@
 				}
 				uiRadio.someStateChange();
 		    });
+		    this.elements.lastfmsessLink. // connect to LastFM
+				addEventListener("click", function(e) {
+					portMocking.requestForLastFMSession();
+				});
 		    M3U.setStateChangeCallback(this.busyStateChange);
 		    XSPF.setStateChangeCallback(this.busyStateChange);
 		    LastFM.setStateChangeCallback(this.busyStateChange);
@@ -516,22 +549,41 @@
 				this.elements.volume_bar.value = level;
 			Player.setVolume(level);
 			this.elements.appearVolumeIcon();
+		},
+		scrobble: function(enable, name){
+			this.allowedLASTFMSCROBBLEoption = enable;
+			this.elements.updateScrobbleInfo(enable, name);
+			console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
 		}
 	};
 	var portMocking = {
 		useMocking: true,
 
+		requestLastFMScrobble: function(artist, track) {
+			if(this.useMocking)
+			{
+				setTimeout(function(){portMocking.responseLastFMScrobble(200);}, 2000);
+			}else{
+
+			}
+		},
+		responseLastFMScrobble: function(status) {
+			if(status===200)
+				console.log("scrobbled for: ", LastFM.state.username);
+			else console.warn("scrobbling error");
+			LastFM.portScrobble();
+		},
 		requestBeep: function(){
 			if(this.useMocking)
 			{
-
+				// console.log("beep");
 			}else{
 
 			}
 		},
 
 		requestForLastFMSession: function(){
-
+			self.port.emit('createLastFMSession', {});
 		},
 
 		requestXSPF: function(){
@@ -665,10 +717,18 @@
 		},
 
 		portLastFMStatus: function(state){
-			// uiRadio set status string
-			// allow
-		}
+			uiRadio.scrobble(state.isAuthorised, state.name);
+			
+		},
 	};
+
+	portMocking.useMocking = false;
+	if(!portMocking.useMocking)
+	{
+		self.port.on("LastFMStatus", function(obj){
+			portMocking.portLastFMStatus(obj);
+		});
+	}
 
 	Player.initialise();
 	uiRadio.initialise();
@@ -679,5 +739,7 @@
     //http://94.25.53.131:80/ultra-128.mp3
     //http://94.25.53.131:80/ultra-56.aac
     Player.setSource("http://94.25.53.131:80/ultra-128.mp3");
+
+    portMocking.portLastFMStatus({isAuthorised: false});
     // Player.play();
 // }());
