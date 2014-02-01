@@ -43,6 +43,11 @@
 				this.errorStream = false;
 				this.invokeStateChangeCallback();
 			},
+			unwaiting: function(){ 
+				this.waitingStream = false;
+				this.errorStream = false;
+				this.invokeStateChangeCallback();
+			},
 			error: function(){ 
 				this.playingStream = false; 
 				this.waitingStream = false;
@@ -122,15 +127,16 @@
 		 a.addEventListener("playing", function() {Player.state.playing(); } );
 		 a.addEventListener("waiting", function() {Player.state.waiting(); } );
 		 a.addEventListener("error", function(e) { Player.stop(); Player.state.error(); } );
-		 // a.addEventListener("canplay", function(e) {console.log('canplay'); } );
 
-		 a.addEventListener("suspend", function() {Player.state.stopped(); } );
+		 a.addEventListener("suspend", function(e) { console.log(e); Player.state.unwaiting(); } );// ??????????? panel hiding => suspending?
 		 a.addEventListener("ended", function() {Player.state.stopped(); } );
 		 a.addEventListener("stalled", function() {Player.state.waiting(); } ); 
 		 
 		 a.addEventListener("abort", function() {Player.state.stopped(); } ); 
 
 		 a.addEventListener("loadstart", function() {Player.state.waiting(); } );
+		 a.addEventListener("loadend", function() {Player.state.unwaiting(); } );
+		 a.addEventListener("canplay", function(e) {Player.state.unwaiting(); } );
 		 // a.addEventListener("progress", function(e) { console.log("progress", e); } );
 		},
 
@@ -198,8 +204,16 @@
 			{
 				this.loadingCover = false;
 				_callQuasiFunction(this.onStateChange, null);
-				data = (status === 200? {url: this.retrieveCover(data.track.album.image, 3)}: {error: 1});
-				_callQuasiFunction(this.loadingCallback, null, status, data);
+
+				if( typeof data.track !== "undefined" && 
+					typeof data.track.album !== "undefined" && 
+					typeof data.track.album.image !== "undefined" )
+				{
+					data = (status === 200? {url: this.retrieveCover(data.track.album.image, 3)}: {error: 1});
+					_callQuasiFunction(this.loadingCallback, null, status, data);
+				}else{
+					portMocking.requestLastFMArtist(this.trackRequest.artist);
+				}
 			}
 			else{
 				portMocking.requestLastFMArtist(this.trackRequest.artist);
@@ -209,9 +223,12 @@
 			this.loadingCover = false;
 			_callQuasiFunction(this.onStateChange, null);
 
-			data = (status === 200? {url: this.retrieveCover(data.artist.image, 3)}: {error: 1});
-			_callQuasiFunction(this.loadingCallback, null, status, data);
-			
+			if( typeof data.artist !== "undefined" && 
+				typeof data.image !== "undefined" )
+			{
+				data = (status === 200? {url: this.retrieveCover(data.artist.image, 3)}: {error: 1});
+				_callQuasiFunction(this.loadingCallback, null, status, data);
+			}
 		},
 		retrieveCover: function (arrayCovers, predefIndex)
 		{
@@ -248,16 +265,25 @@
 				return;
 			}
 			this.loadingXSPF = true;
+			_callQuasiFunction(this.onStateChange, null);
+
 			this.loadingCallback = onLoad;
 			portMocking.requestXSPF();
-			_callQuasiFunction(this.onStateChange, null);
 		},
 		parseXSPFdata: function(string){
 			var xspf = _parseXml(string);
-			var track = xspf.querySelector('track > title').textContent;
-			var artistAndTitle = track.split(" - ");
+			var track_e = xspf.querySelector('track > title');
 
-			return {artist: artistAndTitle[0], title: artistAndTitle[1]};
+			if(typeof track_e == "undefined")
+				return;
+			try {
+				var track = track_e.textContent;
+				var artistAndTitle = track.split(" - ");
+
+				return {artist: artistAndTitle[0], title: artistAndTitle[1]};
+			}catch(e){
+				console.warn("can't parse xspf data");
+			}
 		},
 		portXSPF: function(status, data){
 			this.loadingXSPF = false;
@@ -326,6 +352,10 @@
 
 					if(uiRadio.allowedLASTFMoption)
 					{
+						if(uiRadio.allowedLASTFMSCROBBLEoption)
+						{
+							LastFM.scrobble(artist, title);
+						}
 						LastFM.getCover(this.artist, this.title, function(status, data)
 						{
 							if(status === 200)
@@ -422,7 +452,7 @@
 				var curr_min = d.getMinutes();
 
 				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соеденено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
-				this.lastfmUser.innerHTML = _escapeHTML(username);
+				this.lastfmUser.innerHTML = _escapeHTML(username?username:"");
 			}
 		},
 		isRadioBusy: function(){
@@ -447,7 +477,7 @@
 		},
 		updateUI: function(){
 			var s = Player.state;
-			this.buttons.togglePlayButton(Player.isPlaying() || Player.isWaiting());
+			this.buttons.togglePlayButton(Player.isPlaying());
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
 			if(!Player.isPlaying())
 			{
@@ -553,6 +583,7 @@
 		scrobble: function(enable, name){
 			this.allowedLASTFMSCROBBLEoption = enable;
 			this.elements.updateScrobbleInfo(enable, name);
+			LastFM.state.username = name;
 			console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
 		}
 	};
@@ -735,6 +766,7 @@
 	if(!portMocking.useMocking)
 	{
 		self.port.on("LastFMStatus", function(obj){
+
 			portMocking.portLastFMStatus(obj);
 		});
 		self.port.on("lastfm_scrobble", function(obj){
