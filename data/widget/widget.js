@@ -291,7 +291,7 @@
 		{
 			var iofleft = xmlstring.indexOf("<title>");
 			var iofright = xmlstring.indexOf("</title>");
-			if(iofright >= 0 && iofleft >= 0)
+			if(iofright > 0 && iofleft >= 0)
 			{
 				try{
 				var tracks = xmlstring.substring(iofleft +7, iofright);
@@ -361,32 +361,42 @@
 			artist: '',
 			title: '',
 			coverUrl: "images/logo-big.png",
+			scrobbled: false,
 
 			setTitle: function(artist, title){
 				if(this.artist !== artist && this.title !== title){
+					
 					this.artist = artist;
 					this.title = title;
+					this.scrobbled = false;
 					uiRadio.deferUpdateUi();
 
 					if(uiRadio.allowedLASTFMoption)
 					{
-						if(uiRadio.allowedLASTFMSCROBBLEoption)
-						{
-							LastFM.scrobble(artist, title);
-						}
+						this.scrobbleCurrentComposition();
 						LastFM.getCover(this.artist, this.title, function(status, data)
 						{
 							if(status === 200)
 							{
 								uiRadio.trackMetaInformation.setCoverUrl(data.url);
 							}else{
-								console.error("LastFM data loading error");
+								console.error("LastFM track/artist loading error");
 
 								uiRadio.trackMetaInformation.setDefaultCover();
 								uiRadio.deferUpdateUi();
 							}
 						});
 					}
+				}
+			},
+			scrobbleCurrentComposition: function(){
+				if(!this.scrobbled)
+				{
+					if(uiRadio.allowedLASTFMSCROBBLEoption)
+					{
+						LastFM.scrobble(artist, title);
+					}
+					this.scrobbled = true;
 				}
 			},
 			setCoverUrl: function(url){
@@ -469,7 +479,7 @@
 				var curr_hour = d.getHours();
 				var curr_min = d.getMinutes();
 
-				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соеденено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
+				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соединено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
 				this.lastfmUser.innerHTML = _escapeHTML(username?username:"");
 			}
 		},
@@ -505,6 +515,7 @@
 			this.elements.setTitle(this.trackMetaInformation.artist, this.trackMetaInformation.title);
 			this.elements.setCoverUrl(this.trackMetaInformation.coverUrl);
 
+			console.log("full ui update");
 		},
 		updateUIBusy: function(){
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
@@ -605,6 +616,11 @@
 			this.elements.appearVolumeIcon();
 		},
 		scrobble: function(enable, name){
+			if( !this.allowedLASTFMSCROBBLEoption && enable)
+			{
+				// scrobble current composition
+
+			}
 			this.allowedLASTFMSCROBBLEoption = enable;
 			this.elements.updateScrobbleInfo(enable, name);
 			LastFM.state.username = name;

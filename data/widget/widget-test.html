@@ -4,14 +4,35 @@
   <meta charset="utf-8">
   <link href="css/generic.css" rel="stylesheet" type="text/css" />
   <link href="css/popup.css" rel="stylesheet" type="text/css" />
-  
+  <style type="text/css">
+    @-moz-keyframes tAnim {
+      from { background-position: 0px 0px; }
+      to {background-position: -6100px 0px;}
+    }
+    #tanim {
+      animation: 11s steps(100, end) 0s normal none infinite tAnim;
+      background: url("images/reslt.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+      width: 61px;
+      height: 61px;
+      left: 55px;
+      position: relative;
+  }
+  #logostat {
+      background: url("images/logo.png") no-repeat 0 0 rgba(0, 0, 0, 0);
+      height: 61px;
+      left: 10%;
+      position: relative;
+      width: 173px;
+  }
+  </style>
 </head>
 <body style="margin: 0">
 <div style="background: url('images/player-bg.png') no-repeat scroll 0px 0px transparent; margin-top: -10px;">
 <div style="margin: 0px 8px 8px; padding: 0px;">
   <hr>
   <div class="logo">
-    <img src="images/logo.png" alt="" />
+    <!-- <img src="images/logo.png" alt="" /> -->
+    <div id="logostat"><div id="tanim"></div></div> 
   </div>
   <hr>
   <div class="player">
