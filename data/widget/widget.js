@@ -902,6 +902,6 @@
     //http://94.25.53.131:80/ultra-56.aac
     Player.setSource("http://94.25.53.131:80/ultra-128.mp3");
 
-    portMocking.portLastFMStatus({isAuthorised: false});
+    portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised"});
     // Player.play();
 // }());

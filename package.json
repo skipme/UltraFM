@@ -4,6 +4,6 @@
   "id": "jid1-xv7ZObAh7kVDMg",
   "description": "a basic add-on",
   "author": "Vitaliy (cerriun@gmail.com)",
-  "license": "MPL 2.0",
+  "license": "MIT",
   "version": "0.1"
 }
