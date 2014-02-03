@@ -454,6 +454,9 @@
 			panel_player: null,
 			panel_opts: null,
 			options_active: false,
+			avk: null,
+			alastfm: null,
+			agith: null,
 
 			assignElements: function(){
 				this.busyAnimation = document.getElementById('connecting');
@@ -468,6 +471,9 @@
       			this.bookmark = document.getElementById('bookmark-la');
       			this.panel_player = document.getElementById('ff-player'); 
       			this.panel_opts = document.getElementById('ff-opts'); 
+      			this.avk = document.querySelector('.icon.vk');
+      			this.alastfm = document.querySelector('.icon.lastfm');
+      			this.agith = document.querySelector('.icon.github');
 			},
 			toggleBusyAnimation: function(show){
 				this.busyAnimation.style.display = (show? 'block' : 'none');
@@ -475,6 +481,8 @@
 			setTitle: function(artist, title){
 				this.artist.innerHTML = _escapeHTML(artist);
 				this.song.innerHTML = _escapeHTML(title);
+				this.avk.href = 'http://vk.com/audio?q='+_escapeHTML(title);
+				this.alastfm.href = 'http://last.fm/music/'+_escapeHTML(artist)+'/_/'+_escapeHTML(title);
 			},
 			setCoverUrl: function(url){
 				this.cover[0].style.backgroundImage = 'url("'+url+'")';
@@ -490,7 +498,7 @@
 				var curr_hour = d.getHours();
 				var curr_min = d.getMinutes();
 
-				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соединено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
+				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соединено в "+curr_hour + " : " + curr_min) : "авторизоваться с LastFM");
 				this.lastfmUser.innerHTML = _escapeHTML(username?username:"");
 			},
 			showFire: function(show)
@@ -592,6 +600,21 @@
 				addEventListener("click", function(e) {
 					uiRadio.elements.showOptions();
 			});
+			this.elements.alastfm. // 
+				addEventListener("click", function(e) {
+					portMocking.requestTab(e.target.href);
+					e.preventDefault();
+			});
+			this.elements.avk. // 
+				addEventListener("click", function(e) {
+					portMocking.requestTab(e.target.href);
+					e.preventDefault();
+			});
+			this.elements.agith. // 
+				addEventListener("click", function(e) {
+					portMocking.requestTab(e.target.href);
+					e.preventDefault();
+			});
 
 		    M3U.setStateChangeCallback(this.busyStateChange);
 		    XSPF.setStateChangeCallback(this.busyStateChange);
@@ -668,6 +691,14 @@
 	var portMocking = {
 		useMocking: true,
 
+		requestTab: function(url){
+			if(this.useMocking)
+			{
+				
+			}else{
+				self.port.emit('open_tab', {url: url});
+			}
+		},
 		requestLastFMScrobble: function(artist, track) {
 			if(this.useMocking)
 			{
