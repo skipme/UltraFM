@@ -462,8 +462,8 @@
 				this.busyAnimation = document.getElementById('connecting');
 		        this.volume_bar  = document.querySelector('.volume input');
       			this.volume_icon = document.querySelector('.volume .icon');
-	      		this.artist = document.getElementsByClassName("artist")[0];
-				this.song   = document.getElementsByClassName("song")[0];
+	      		this.artist = document.querySelector(".artist");
+				this.song   = document.querySelector(".song");
       			this.cover  = document.getElementsByClassName("half");
       			this.lastfmsessLink = document.getElementById('createLastFMSession');
       			this.lastfmUser = document.getElementById('lastfm-user');
@@ -479,8 +479,8 @@
 				this.busyAnimation.style.display = (show? 'block' : 'none');
 			},
 			setTitle: function(artist, title){
-				this.artist.innerHTML = _escapeHTML(artist);
-				this.song.innerHTML = _escapeHTML(title);
+				this.artist.textContent = artist;
+				this.song.textContent = title;
 				this.avk.href = 'http://vk.com/audio?q='+_escapeHTML(title);
 				this.alastfm.href = 'http://last.fm/music/'+_escapeHTML(artist)+'/_/'+_escapeHTML(title);
 			},
@@ -490,7 +490,7 @@
 			},
 			appearVolumeIcon: function(){
 				var ivalue = Player.state.volumeLevel;
-				this.volume_icon.innerHTML = _escapeHTML(String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4))));
+				this.volume_icon.textContent = _escapeHTML(String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4))));
 			},
 			updateScrobbleInfo: function(enabled, username)
 			{
@@ -498,8 +498,8 @@
 				var curr_hour = d.getHours();
 				var curr_min = d.getMinutes();
 
-				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соединено в "+curr_hour + " : " + curr_min) : "авторизоваться с LastFM");
-				this.lastfmUser.innerHTML = _escapeHTML(username?username:"");
+				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено в "+curr_hour + " : " + curr_min) : "авторизоваться с LastFM");
+				this.lastfmUser.textContent = _escapeHTML(username?username:"");
 			},
 			showFire: function(show)
 			{
@@ -895,13 +895,9 @@
 	Player.initialise();
 	uiRadio.initialise();
     uiRadio.isVisible = true;
-  //   Player.setStateChangeCallback(function(s){
-		// console.log("schange: ", s.stateString());
-  //   });
-    //http://94.25.53.131:80/ultra-128.mp3
-    //http://94.25.53.131:80/ultra-56.aac
-    Player.setSource("http://94.25.53.131:80/ultra-128.mp3");
+
+    Player.setSource("http://94.25.53.133:80/ultra-128.mp3");
 
     portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised"});
-    // Player.play();
+
 // }());
