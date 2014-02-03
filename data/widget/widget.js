@@ -145,6 +145,9 @@
 		loadingCallback: null,
 		loadingCoverImage: false,
 		img: null,
+
+		timeoutId: -1,
+
 		setStateChangeCallback: function(onChange){
 			this.onStateChange = onChange;
 		},
@@ -170,6 +173,21 @@
 		        _callQuasiFunction(CoverImageLoader.onStateChange, null);
 		        console.log("image url error", url);
 		    };
+		    if(this.timeoutId !== -1)
+		    {	
+		    	clearTimeout(this.timeoutId);
+		    	this.timeoutId = -1;
+		    }
+		    this.timeoutId = setTimeout(function() {
+		    	if(CoverImageLoader.loadingCoverImage)
+		    	{	
+		    		CoverImageLoader.loadingCoverImage = false;
+		    		_callQuasiFunction(CoverImageLoader.onStateChange, null);
+		    		_callQuasiFunction(onLoad, null, -1, {url: url});
+		        	console.log("image url timed out", url);
+		    	}
+		    	CoverImageLoader.timeoutId = -1;
+		    }, 10000);
 		    this.img.src = url;
 		}
 	};
