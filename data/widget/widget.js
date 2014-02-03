@@ -394,7 +394,7 @@
 				{
 					if(uiRadio.allowedLASTFMSCROBBLEoption)
 					{
-						LastFM.scrobble(artist, title);
+						LastFM.scrobble(this.artist, this.title);
 					}
 					this.scrobbled = true;
 				}
@@ -415,7 +415,9 @@
 				}
 			},
 			setDefaultCover: function(){
-				this.coverUrl = "http://userserve-ak.last.fm/serve/300x300/93524263.png";//images/logo-big.png";
+				this.coverUrl = 
+				// "http://userserve-ak.last.fm/serve/300x300/93524263.png";
+				"images/logo-big.png";
 			},
 			setDefaultTitle: function(){
 				this.title = 'stopped';
@@ -447,6 +449,11 @@
 			cover: null,
 			lastfmsessLink: null,
 			lastfmUser: null,
+			firet: null,
+			bookmark: null,
+			panel_player: null,
+			panel_opts: null,
+			options_active: false,
 
 			assignElements: function(){
 				this.busyAnimation = document.getElementById('connecting');
@@ -457,6 +464,10 @@
       			this.cover  = document.getElementsByClassName("half");
       			this.lastfmsessLink = document.getElementById('createLastFMSession');
       			this.lastfmUser = document.getElementById('lastfm-user');
+      			this.firet = document.getElementById('tanim');
+      			this.bookmark = document.getElementById('bookmark-la');
+      			this.panel_player = document.getElementById('ff-player'); 
+      			this.panel_opts = document.getElementById('ff-opts'); 
 			},
 			toggleBusyAnimation: function(show){
 				this.busyAnimation.style.display = (show? 'block' : 'none');
@@ -471,7 +482,7 @@
 			},
 			appearVolumeIcon: function(){
 				var ivalue = Player.state.volumeLevel;
-				this.volume_icon.innerHTML = _escapeHTML(String(ivalue > 60 ? 6 : (ivalue > 0 ? 5: 4)));
+				this.volume_icon.innerHTML = _escapeHTML(String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4))));
 			},
 			updateScrobbleInfo: function(enabled, username)
 			{
@@ -481,6 +492,27 @@
 
 				this.lastfmsessLink.innerHTML = _escapeHTML(enabled?("соединено "+curr_hour + " : " + curr_min) : "соединить с LastFM");
 				this.lastfmUser.innerHTML = _escapeHTML(username?username:"");
+			},
+			showFire: function(show)
+			{
+				this.firet.style.display = show? "block":"none" ;
+			},
+			showOptions: function()
+			{
+				var show = this.options_active = !this.options_active;
+
+				if(show)
+				{
+					this.panel_player.classList.remove('panel-active');
+					this.panel_opts.classList.remove('panel-hidden');
+					this.panel_player.classList.add('panel-hidden');
+					this.panel_opts.classList.add('panel-active');
+				}else{
+					this.panel_opts.classList.remove('panel-active');
+					this.panel_player.classList.remove('panel-hidden');
+					this.panel_opts.classList.add('panel-hidden');
+					this.panel_player.classList.add('panel-active');
+				}
 			}
 		},
 		isRadioBusy: function(){
@@ -512,6 +544,7 @@
 				this.trackMetaInformation.setDefaultTitle();
 				this.trackMetaInformation.setDefaultCover();
 			}
+			this.elements.showFire(Player.isPlaying());
 			this.elements.setTitle(this.trackMetaInformation.artist, this.trackMetaInformation.title);
 			this.elements.setCoverUrl(this.trackMetaInformation.coverUrl);
 
@@ -554,7 +587,12 @@
 		    this.elements.lastfmsessLink. // connect to LastFM
 				addEventListener("click", function(e) {
 					portMocking.requestForLastFMSession();
-				});
+			});
+			this.elements.bookmark. // options
+				addEventListener("click", function(e) {
+					uiRadio.elements.showOptions();
+			});
+
 		    M3U.setStateChangeCallback(this.busyStateChange);
 		    XSPF.setStateChangeCallback(this.busyStateChange);
 		    LastFM.setStateChangeCallback(this.busyStateChange);
@@ -654,7 +692,7 @@
 		},
 
 		requestForLastFMSession: function(){
-			if(useMocking)
+			if(this.useMocking)
 				return;
 			else
 				self.port.emit('createLastFMSession', {});

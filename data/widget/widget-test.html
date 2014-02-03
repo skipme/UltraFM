@@ -9,12 +9,13 @@
       from { background-position: 0px 0px; }
       to {background-position: -6100px 0px;}
     }
+
     #tanim {
       animation: 11s steps(100, end) 0s normal none infinite tAnim;
       background: url("images/reslt.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
       width: 61px;
       height: 61px;
-      left: 55px;
+      left: 56px;
       position: relative;
   }
   #logostat {
@@ -24,50 +25,105 @@
       position: relative;
       width: 173px;
   }
+  #bookmark-la {
+    background: url("images/bookmark.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+    height: 15px;
+    position: absolute;
+    right: -30px;
+    top: 50px;
+    width: 64px;
+    cursor: pointer;
+    -moz-transition: all 0.3s ease-out;
+    opacity: 0.7;
+  }
+  #bookmark-la:hover{
+    opacity: 1;
+    right: -20px;
+  }
+  .panel {
+    -moz-transition: left 0.7s ease-out;
+    position: absolute;
+  }
+  .panel-active {
+    left: 0px;
+  }
+  .panel-hidden {
+    left: -500px;
+  }
+  #bookmark-la a {
+      display: block;
+      -moz-box-sizing: border-box;
+      text-decoration: none;
+      outline: none;
+      -moz-user-select: none;
+  }
+  #createLastFMSession {
+    cursor: pointer;
+  }
   </style>
 </head>
 <body style="margin: 0">
 <div style="background: url('images/player-bg.png') no-repeat scroll 0px 0px transparent; margin-top: -10px;">
 <div style="margin: 0px 8px 8px; padding: 0px;">
   <hr>
+
   <div class="logo">
     <!-- <img src="images/logo.png" alt="" /> -->
-    <div id="logostat"><div id="tanim"></div></div> 
-  </div>
-  <hr>
-  <div class="player">
-    <div class="static half"></div>
-    <div class="flip half"></div>
-    <div class="buttons">
-      <a class="icon play" style="color: rgba(0,0,0,0.7)">1</a>
-      <a class="icon stop" style="color: rgba(0,0,0,0.1)">2</a>
-      <a target="_blank" class="icon vk" style="color: #527498">8</a>
-      <a target="_blank" class="icon lastfm" style="color: #bd1f24">9</a>
-      <a href="https://github.com/Sfate/UltraFM" class="icon github" style="color: #333333">7</a>
+    <div id="logostat"><div id="tanim"></div>
     </div>
   </div>
-  <div class="volume">
-    <span class="icon">4</span><input type="range" min="0" max="100">
-  </div>
-  <div class="track-info">
-    <p class="artist">UltraFM</p>
-    <p class="song">stopped</p>
-  </div>
+  <div id="bookmark-la"><a class="icon" style="  color: #BD1F24;
+    font-size: 10px;
+    left: 14px;
+    position: relative;
+    cursor:inherit;
+    top: -3px;" >a&nbsp;f</a></div> 
+
   <hr>
-  <img id="connecting" src="images/connecting.gif" alt=""/>
-  <a class="scrobbling" target="_blank"></a>
+
+  <div id="panels" style="position: relative;height: 400px;">
+    <div id="ff-player" class="panel-active panel">
+      <div class="player">
+        <div class="static half"></div>
+        <div class="flip half"></div>
+        <div class="buttons">
+          <a class="icon play" style="color: rgba(0,0,0,0.7)">1</a>
+          <a class="icon stop" style="color: rgba(0,0,0,0.1)">2</a>
+          <a target="_blank" class="icon vk" style="color: #527498">9</a>
+          <a target="_blank" class="icon lastfm" style="color: #bd1f24">a</a>
+          <a href="https://github.com/Sfate/UltraFM" class="icon github" style="color: #333333">8</a>
+        </div>
+      </div>
+      <div class="volume">
+        <span class="icon">4</span><input type="range" min="0" max="100">
+      </div>
+      <div class="track-info">
+        <p class="artist">UltraFM</p>
+        <p class="song">stopped</p>
+      </div>
+      <hr>
+      <img id="connecting" src="images/connecting.gif" alt=""/>
+      <a class="scrobbling" target="_blank"></a>
+      </div>
+
+    <div id="ff-opts" class="panel-hidden panel" style="font-family: track;margin: 0px 8px 8px; padding: 0px; " >
+      <dl>
+      <dt>Статус</dt>
+       <dd><a id="createLastFMSession">соединить с LastFM</a></dd>
+      <dt>Пользователь</dt>
+       <dd><span id="lastfm-user"></span></dd>
+    </dl>
+    </div>
+
   </div>
+
+  </div>
+  <div>
+
   <audio preload='none' id="player-audio"></audio>
   </div>
-  <!-- display: none; -->
-  <div style="margin: 0px 8px 8px; padding: 0px; font-family: track " id="lastfm-stat">
-    <dl>
-    <dt>Статус</dt>
-     <dd><a id="createLastFMSession">соединить с LastFM</a></dd>
-    <dt>Пользователь</dt>
-     <dd><span id="lastfm-user"></span></dd>
-  </dl>
-  <div>
+
+
   <script type="text/javascript" src="widget.js"></script>
 </body>
 </html>
