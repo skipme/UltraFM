@@ -2,7 +2,7 @@
   "name": "ultrafm_firefox",
   "title": "UltraFM",
   "id": "jid1-xv7ZObAh7kVDMg",
-  "description": "a basic add-on",
+  "description": "Проигрыватель радио Ultra (radioultra.ru) со скробблингом lastFM и 'огоньком' )",
   "author": "Vitaliy (cerriun@gmail.com)",
   "license": "MIT",
   "version": "0.2.1"

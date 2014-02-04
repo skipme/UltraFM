@@ -273,11 +273,17 @@
 		loadingCallback: null,
 		loadingXSPF: false,
 		onStateChange: null,
+		xspfUrl: null,
 
 		setStateChangeCallback: function(onChange){
 			this.onStateChange = onChange;
 		},
 		getXSPFdata: function(onLoad){
+			if(this.xspfUrl === null || typeof this.xspfUrl === "undefined" || this.xspfUrl == "")
+			{
+				_callQuasiFunction(onLoad, null, -1, {emptyurl: 1});
+				return;
+			}
 			if(this.loadingXSPF)
 			{
 				_callQuasiFunction(onLoad, null, -1, {waiting: 1});
@@ -287,7 +293,7 @@
 			_callQuasiFunction(this.onStateChange, null);
 
 			this.loadingCallback = onLoad;
-			portMocking.requestXSPF();
+			portMocking.requestXSPF(this.xspfUrl);
 		},
 		parseXSPFdata: function(xmlstring){
 			var xspf = _parseXml(xmlstring);
@@ -345,7 +351,27 @@
 				return;
 			}
 			this.loadingM3U = true;
+			_callQuasiFunction(this.onStateChange, null);
+
 			this.loadingCallback = onLoad;
+			portMocking.requestM3U();
+		},
+		portM3U: function(status, data){
+			this.loadingM3U = false;
+			_callQuasiFunction(this.onStateChange, null);
+
+			data = (status === 200? this.parseM3Udata(data): {error: 1});
+			_callQuasiFunction(this.loadingCallback, null, status, data);
+		},
+		parseM3Udata: function(xmlstring){
+			var mp3 = xmlstring.split("\n")[0];
+			var mp3e = null;
+			if((mp3e = mp3.indexOf(".mp3")) > 0)
+			{
+				var xspf = mp3.substring(0,mp3e +4) +".xspf";
+				return {mp3: mp3, xspf: xspf};
+			}
+			return null;
 		}
 	};
 
@@ -544,7 +570,7 @@
 		isRadioBusy: function(){
 			return Player.isWaiting() || 
 			XSPF.loadingXSPF || LastFM.loadingCover|| CoverImageLoader.loadingCoverImage ||
-			LastFM.requestScrobble;
+			LastFM.requestScrobble || M3U.loadingM3U;
 		},
 		getCover: function (artist, album, onLoad){
 			this.callback = onLoad;
@@ -592,7 +618,17 @@
 						console.log("radio is busy")
 						return;
 					}
-					Player.play();
+					M3U.getM3Udata(function(code, data){
+						if(code !== 200 || data === null || data.error)
+						{
+							console.log("nothing to play...");
+						}else{
+							Player.setSource(data.mp3);
+							XSPF.xspfUrl = data.xspf;
+							Player.play();	
+						}
+					})
+					
 				});
 			this.buttons.stop. // STOP
 				addEventListener("click", function(e) {
@@ -746,8 +782,21 @@
 			else
 				self.port.emit('createLastFMSession', {});
 		},
-
-		requestXSPF: function(){
+		requestM3U: function(){
+			if(this.useMocking)
+			{
+				setTimeout(function(){
+					portMocking.responseM3U(200, "http://94.25.53.132:80/ultra-128.mp3");
+				}, 2000);
+			}else{
+				self.port.emit('takem3u', {});
+			}
+		},
+		responseM3U: function(status, data){
+			console.log("m3u port response", status);
+			M3U.portM3U(status, data);
+		},
+		requestXSPF: function(url){
 			if(this.useMocking)
 			{
 				setTimeout(function(){
@@ -770,10 +819,10 @@
 '      <info>http://www.radioultra.ru</info>',
 '    </track>',
 '  </trackList>',
-'</playlist>'].join(''));}, 2000);
+'</playlist>'].join('\n'));}, 2000);
 
 			}else{
-				self.port.emit('loadXSPF', {});
+				self.port.emit('loadXSPF', {url: url});
 			}
 		},
 		responseXSPF: function(status, data){
@@ -902,6 +951,9 @@
 		self.port.on("here_xspf", function(obj){
 			portMocking.responseXSPF(obj.code, obj.data);
 		});
+		self.port.on("here_m3u", function(obj){
+			portMocking.responseM3U(obj.code, obj.data);
+		});
 		self.port.on("lastfm_trackinfo", function(obj){
 			portMocking.responseLastFMTrack(obj.code, obj.data);
 		});
@@ -914,7 +966,8 @@
 	uiRadio.initialise();
     uiRadio.isVisible = true;
 
-    Player.setSource("http://94.25.53.133:80/ultra-128.mp3");
+    // Player.setSource("http://94.25.53.132:80/ultra-128.mp3");
+    uiRadio.deferUpdateUi();
 
     portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised"});
 
