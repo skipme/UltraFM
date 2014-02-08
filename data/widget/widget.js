@@ -360,16 +360,34 @@
 			this.loadingM3U = false;
 			_callQuasiFunction(this.onStateChange, null);
 
-			data = (status === 200? this.parseM3Udata(data): {error: 1});
+			data = (status === 200? this.parseM3Udata(data.m3u, data.isShoutcastServer): {error: 1});
 			_callQuasiFunction(this.loadingCallback, null, status, data);
 		},
-		parseM3Udata: function(xmlstring){
-			var mp3 = xmlstring.split("\n")[0];
+		parseM3Udata: function(xmlstring, shoutcastServer){
+			var m3ulines = xmlstring.split("\n");
+			var mp3 = null;
+			for (var i = 0; i < m3ulines.length; i++) {
+				if(m3ulines[i][0] === "#")
+					continue;
+				else{
+					mp3 = m3ulines[i];
+					break;
+				}
+			};
+			
+			if(mp3 === null)
+				return null;
+
 			var mp3e = null;
 			if((mp3e = mp3.indexOf(".mp3")) > 0)
 			{
 				var xspf = mp3.substring(0,mp3e +4) +".xspf";
 				return {mp3: mp3, xspf: xspf};
+			}
+			else if(shoutcastServer){
+				var liof = mp3.lastIndexOf("/");
+				var icecast7 = mp3.substring(0,liof) +"/7.html";
+				return {mp3: mp3 +";", xspf: null, icecast7: null};
 			}
 			return null;
 		}
@@ -390,7 +408,8 @@
 		}
     	else console.error("trying to invoke inconsistent function", foo);
     };
-    function _escapeHTML(str) str.replace(/[&"<>]/g, function (m) _escapeHTML.replacements[m]);
+
+    function _escapeHTML(str) { return str.replace(/[&"<>]/g, function (m) { return _escapeHTML.replacements[m];}); };
 	_escapeHTML.replacements = { "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" };
 
 	var uiRadio = {
@@ -525,7 +544,7 @@
 			setTitle: function(artist, title){
 				this.artist.textContent = artist;
 				this.song.textContent = title;
-				this.avk.href = 'http://vk.com/audio?q='+_escapeHTML(title);
+				this.avk.href = 'http://vk.com/audio?q=' +_escapeHTML(artist) +' - '+ _escapeHTML(title);
 				this.alastfm.href = 'http://last.fm/music/'+_escapeHTML(artist)+'/_/'+_escapeHTML(title);
 			},
 			setCoverUrl: function(url){
@@ -534,7 +553,7 @@
 			},
 			appearVolumeIcon: function(){
 				var ivalue = Player.state.volumeLevel;
-				this.volume_icon.textContent = _escapeHTML(String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4))));
+				this.volume_icon.textContent = String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4)));
 			},
 			updateScrobbleInfo: function(enabled, username)
 			{
@@ -786,7 +805,8 @@
 			if(this.useMocking)
 			{
 				setTimeout(function(){
-					portMocking.responseM3U(200, "http://94.25.53.132:80/ultra-128.mp3");
+					// portMocking.responseM3U(200, "http://94.25.53.132:80/ultra-128.mp3");
+					portMocking.responseM3U(200, {m3u: ["#", "http://193.35.52.62:8113/"].join("\n"), isShoutcastServer: true});
 				}, 2000);
 			}else{
 				self.port.emit('takem3u', {});
@@ -938,7 +958,7 @@
 		},
 	};
 
-	portMocking.useMocking = false;
+	// portMocking.useMocking = false;
 	if(!portMocking.useMocking)
 	{
 		self.port.on("LastFMStatus", function(obj){
