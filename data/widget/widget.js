@@ -387,7 +387,7 @@
 			else if(shoutcastServer){
 				var liof = mp3.lastIndexOf("/");
 				var icecast7 = mp3.substring(0,liof) +"/7.html";
-				return {mp3: mp3 +";", xspf: null, icecast7: null};
+				return {mp3: mp3 +";", xspf: null, icecast7: icecast7};
 			}
 			return null;
 		}
@@ -424,6 +424,7 @@
 			artist: '',
 			title: '',
 			coverUrl: "images/logo-big.png",
+			metaFilled: false,
 			scrobbled: false,
 
 			setTitle: function(artist, title){
@@ -432,6 +433,7 @@
 					this.artist = artist;
 					this.title = title;
 					this.scrobbled = false;
+					this.metaFilled = true;
 					uiRadio.deferUpdateUi();
 
 					if(uiRadio.allowedLASTFMoption)
@@ -453,7 +455,8 @@
 				}
 			},
 			scrobbleCurrentComposition: function(){
-				if(!this.scrobbled)
+				if(!this.scrobbled && uiRadio.allowedLASTFMoption &&
+					this.metaFilled)
 				{
 					if(uiRadio.allowedLASTFMSCROBBLEoption)
 					{
@@ -478,13 +481,12 @@
 				}
 			},
 			setDefaultCover: function(){
-				this.coverUrl = 
-				// "http://userserve-ak.last.fm/serve/300x300/93524263.png";
-				"images/logo-big.png";
+				this.coverUrl = "images/logo-big.png";
 			},
 			setDefaultTitle: function(){
 				this.title = 'stopped';
 				this.artist = 'UltraFM';
+				this.metaFilled = false;
 			}
 		},
 		buttons: {
@@ -512,6 +514,7 @@
 			cover: null,
 			lastfmsessLink: null,
 			lastfmUser: null,
+			lfenabled: null,
 			firet: null,
 			bookmark: null,
 			panel_player: null,
@@ -520,6 +523,7 @@
 			avk: null,
 			alastfm: null,
 			agith: null,
+			opt_savesess: null,
 
 			assignElements: function(){
 				this.busyAnimation = document.getElementById('connecting');
@@ -529,6 +533,8 @@
 				this.song   = document.querySelector(".song");
       			this.cover  = document.getElementsByClassName("half");
       			this.lastfmsessLink = document.getElementById('createLastFMSession');
+      			this.lastfmsessLinkOff = document.getElementById('closeLastFMSession');
+      			this.lfenabled = document.getElementById('lfenabled');
       			this.lastfmUser = document.getElementById('lastfm-user');
       			this.firet = document.getElementById('tanim');
       			this.bookmark = document.getElementById('bookmark-la');
@@ -537,6 +543,7 @@
       			this.avk = document.querySelector('.icon.vk');
       			this.alastfm = document.querySelector('.icon.lastfm');
       			this.agith = document.querySelector('.icon.github');
+      			this.opt_savesess = document.getElementById('opt_savesess');
 			},
 			toggleBusyAnimation: function(show){
 				this.busyAnimation.style.display = (show? 'block' : 'none');
@@ -558,20 +565,21 @@
 			updateScrobbleInfo: function(enabled, username)
 			{
 				var d = new Date();
-				var curr_hour = d.getHours();
-				var curr_min = d.getMinutes();
 
-				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено в "+curr_hour + " : " + curr_min) : "авторизоваться с LastFM");
+				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : "авторизоваться с LastFM");
 				this.lastfmUser.textContent = _escapeHTML(username?username:"");
+				this.lastfmsessLinkOff.style.display = enabled? "block":"none" ;
+				this.lfenabled.style.display = enabled? "":"none" ;
 			},
 			showFire: function(show)
 			{
 				this.firet.style.display = show? "block":"none" ;
 			},
-			showOptions: function()
+			showOptions: function(overrideShow)
 			{
 				var show = this.options_active = !this.options_active;
-
+				if(typeof overrideShow !== "undefined")
+					show = overrideShow;
 				if(show)
 				{
 					this.panel_player.classList.remove('panel-active');
@@ -584,6 +592,10 @@
 					this.panel_opts.classList.add('panel-hidden');
 					this.panel_player.classList.add('panel-active');
 				}
+			},
+			setOptions: function(options)
+			{
+				this.opt_savesess.checked = options.saveLFMSess?"checked":undefined;	
 			}
 		},
 		isRadioBusy: function(){
@@ -669,6 +681,11 @@
 				addEventListener("click", function(e) {
 					portMocking.requestForLastFMSession();
 			});
+			this.elements.lastfmsessLinkOff. // disconnect to LastFM
+				addEventListener("click", function(e) {
+					portMocking.closeLastFMSession();
+			});
+				
 			this.elements.bookmark. // options
 				addEventListener("click", function(e) {
 					uiRadio.elements.showOptions();
@@ -750,14 +767,18 @@
 			this.elements.appearVolumeIcon();
 		},
 		scrobble: function(enable, name){
-			if( !this.allowedLASTFMSCROBBLEoption && enable)
+			if( !this.allowedLASTFMSCROBBLEoption && enable )
 			{
+				this.allowedLASTFMSCROBBLEoption = enable;
 				// scrobble current composition
-
+				this.trackMetaInformation.scrobbleCurrentComposition();
 			}
-			this.allowedLASTFMSCROBBLEoption = enable;
+			
 			this.elements.updateScrobbleInfo(enable, name);
 			LastFM.state.username = name;
+
+			this.elements.showOptions(false);// hide options panel
+
 			console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
 		}
 	};
@@ -767,7 +788,7 @@
 		requestTab: function(url){
 			if(this.useMocking)
 			{
-				
+				window.open(url);
 			}else{
 				self.port.emit('open_tab', {url: url});
 			}
@@ -801,12 +822,18 @@
 			else
 				self.port.emit('createLastFMSession', {});
 		},
+		closeLastFMSession: function(){
+			if(this.useMocking)
+				return;
+			else
+				self.port.emit('closeLastFMSession', {});
+		},
 		requestM3U: function(){
 			if(this.useMocking)
 			{
 				setTimeout(function(){
-					// portMocking.responseM3U(200, "http://94.25.53.132:80/ultra-128.mp3");
-					portMocking.responseM3U(200, {m3u: ["#", "http://193.35.52.62:8113/"].join("\n"), isShoutcastServer: true});
+					portMocking.responseM3U(200, {m3u: "http://94.25.53.132:80/ultra-128.mp3"});
+					// portMocking.responseM3U(200, {m3u: ["#", "http://193.35.52.62:8113/"].join("\n"), isShoutcastServer: true});
 				}, 2000);
 			}else{
 				self.port.emit('takem3u', {});
@@ -831,10 +858,6 @@
 '      <title>10 Years - Actions & Motives</title>',
 '      <annotation>Stream Title: Radio ULTRA Online',
 'Stream Description: Radio ULTRA Online',
-'Content Type:audio/mpeg',
-'Bitrate: 128',
-'Current Listeners: 125',
-'Peak Listeners: 578',
 'Stream Genre: Rock</annotation>',
 '      <info>http://www.radioultra.ru</info>',
 '    </track>',
@@ -986,7 +1009,6 @@
 	uiRadio.initialise();
     uiRadio.isVisible = true;
 
-    // Player.setSource("http://94.25.53.132:80/ultra-128.mp3");
     uiRadio.deferUpdateUi();
 
     portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised"});

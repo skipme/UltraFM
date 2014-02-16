@@ -58,8 +58,24 @@
       outline: none;
       -moz-user-select: none;
   }
-  #createLastFMSession {
+  #createLastFMSession, #closeLastFMSession {
     cursor: pointer;
+    text-decoration: underline;
+  }
+  .bookmarka {
+    color: #BD1F24;
+    font-size: 10px;
+    left: 14px;
+    position: relative;
+    cursor:inherit;
+    top: -3px;
+  }
+  dl dt {
+    color: firebrick;
+  }
+  #ff-opts p {
+    text-transform: uppercase;
+    color: gray;
   }
   </style>
 </head>
@@ -73,12 +89,7 @@
     <div id="logostat"><div id="tanim"></div>
     </div>
   </div>
-  <div id="bookmark-la"><a class="icon" style="  color: #BD1F24;
-    font-size: 10px;
-    left: 14px;
-    position: relative;
-    cursor:inherit;
-    top: -3px;" >a&nbsp;f</a></div> 
+  <div id="bookmark-la"><a class="icon bookmarka" >a&nbsp;<span id="lfenabled">f</span></a></div> 
 
   <hr>
 
@@ -111,9 +122,15 @@
     <p>Скробблинг LastFM:</p>
       <dl>
       <dt>Статус</dt>
-       <dd><a id="createLastFMSession">соединить с LastFM</a></dd>
+       <dd><a id="createLastFMSession">соединить с LastFM</a>
+       <br /><a id="closeLastFMSession" style="display: none">Закрыть сессию LastFM</a></dd>
       <dt>Пользователь</dt>
        <dd><span id="lastfm-user"></span></dd>
+    </dl>
+    <p>опции:</p>
+    <dl>
+      <dt></dt>
+      <dd><label><input type="checkbox" id="opt_savesess" />Сохранять сессию LastFM (небезопасно)</label></dd>
     </dl>
     </div>
 
