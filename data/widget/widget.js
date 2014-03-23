@@ -427,11 +427,40 @@
 			metaFilled: false,
 			scrobbled: false,
 
+			filtrateString: function(str){
+				var result = "";
+				for (var i = 0; i < str.length; i++) {
+					
+					var chkd = str.charCodeAt(i);
+					var chra = str.charAt(i);
+
+					if((chkd >= "a".charCodeAt(0) &&
+					   chkd <= "z".charCodeAt(0))
+						||
+						(chkd >= "A".charCodeAt(0) &&
+					   chkd <= "Z".charCodeAt(0))
+						||
+						(chkd >= "А".charCodeAt(0) &&
+					   chkd <= "Я".charCodeAt(0))
+						||
+						(chkd >= "а".charCodeAt(0) &&
+					   chkd <= "я".charCodeAt(0))
+						|| chra === "&"
+						|| chra === "?"
+						|| chra === "!"
+						|| chra === " "
+						)
+					{
+						result += chra;
+					}
+				};
+				return result;
+			},
 			setTitle: function(artist, title){
 				if(this.artist !== artist && this.title !== title){
 					
-					this.artist = artist;
-					this.title = title;
+					this.artist = this.filtrateString(artist);
+					this.title = this.filtrateString(title);
 					this.scrobbled = false;
 					this.metaFilled = true;
 					uiRadio.deferUpdateUi();
