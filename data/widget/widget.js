@@ -449,10 +449,15 @@
 						|| chra === "?"
 						|| chra === "!"
 						|| chra === " "
+						|| chra === "'"
+						|| chra === '"'
+						|| chra === "(" || chra === ")"
 						)
 					{
 						result += chra;
-					}
+					}else
+					if( chra === "_")
+						result += " ";
 				};
 				return result;
 			},
