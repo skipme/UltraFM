@@ -544,6 +544,8 @@
       			this.alastfm = document.querySelector('.icon.lastfm');
       			this.agith = document.querySelector('.icon.github');
       			this.opt_savesess = document.getElementById('opt_savesess');
+
+      			this.assignEvents();
 			},
 			toggleBusyAnimation: function(show){
 				this.busyAnimation.style.display = (show? 'block' : 'none');
@@ -562,9 +564,9 @@
 				var ivalue = Player.state.volumeLevel;
 				this.volume_icon.textContent = String(ivalue > 80?7:(ivalue > 40 ? 6 : (ivalue > 0 ? 5: 4)));
 			},
-			updateScrobbleInfo: function(enabled, username)
+			updateScrobbleInfo: function(enabled, username, at)
 			{
-				var d = new Date();
+				var d = at;
 
 				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : "авторизоваться с LastFM");
 				this.lastfmUser.textContent = _escapeHTML(username?username:"");
@@ -595,8 +597,22 @@
 			},
 			setOptions: function(options)
 			{
-				this.opt_savesess.checked = options.saveLFMSess?"checked":undefined;	
+				this.opt_savesess.checked = options.saveLFMSess;	
+			},
+			assignEvents: function()
+			{
+				this.opt_savesess. // 
+				addEventListener("click", function(e) {
+					console.log("checker", e.target.checked)
+					uiRadio.options_state.saveLFMSess	= e.target.checked;
+					uiRadio.optionsUiChange();			
+				});
 			}
+		},
+		options_state: {},
+		optionsUiChange: function(){
+			portMocking.requestOptions(this.options_state);
+			console.log("ui opts change", this.options_state)
 		},
 		isRadioBusy: function(){
 			return Player.isWaiting() || 
@@ -686,24 +702,25 @@
 					portMocking.closeLastFMSession();
 			});
 				
-			this.elements.bookmark. // options
+			this.elements.bookmark. // show/hide options
 				addEventListener("click", function(e) {
 					uiRadio.elements.showOptions();
 			});
 			this.elements.alastfm. // 
 				addEventListener("click", function(e) {
-					portMocking.requestTab(e.target.href);
 					e.preventDefault();
+					portMocking.requestTab(e.target.href);
+					
 			});
 			this.elements.avk. // 
 				addEventListener("click", function(e) {
-					portMocking.requestTab(e.target.href);
 					e.preventDefault();
+					portMocking.requestTab(e.target.href);
 			});
 			this.elements.agith. // 
 				addEventListener("click", function(e) {
-					portMocking.requestTab(e.target.href);
 					e.preventDefault();
+					portMocking.requestTab(e.target.href);					
 			});
 
 		    M3U.setStateChangeCallback(this.busyStateChange);
@@ -766,7 +783,7 @@
 			Player.setVolume(level);
 			this.elements.appearVolumeIcon();
 		},
-		scrobble: function(enable, name){
+		scrobble: function(enable, name, at){
 			if( !this.allowedLASTFMSCROBBLEoption && enable )
 			{
 				this.allowedLASTFMSCROBBLEoption = enable;
@@ -774,21 +791,37 @@
 				this.trackMetaInformation.scrobbleCurrentComposition();
 			}
 			
-			this.elements.updateScrobbleInfo(enable, name);
+			this.elements.updateScrobbleInfo(enable, name, at);
 			LastFM.state.username = name;
 
 			this.elements.showOptions(false);// hide options panel
 
 			console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
+		},
+		options: function(opts){
+			if(opts === null || opts === undefined)
+				return;
+
+			this.options_state = opts;
+			this.elements.setOptions(opts);
 		}
 	};
 	var portMocking = {
 		useMocking: true,
-
+		requestOptions: function(opts){
+			if(this.useMocking)
+			{
+			}else{
+				self.port.emit('options', opts);
+			}
+		},
+		responseOptions: function(opts){
+			uiRadio.options(opts);
+		},
 		requestTab: function(url){
 			if(this.useMocking)
 			{
-				window.open(url);
+				// window.open(url);
 			}else{
 				self.port.emit('open_tab', {url: url});
 			}
@@ -976,12 +1009,13 @@
 		},
 
 		portLastFMStatus: function(state){
-			uiRadio.scrobble(state.isAuthorised, state.name);
+			console.log("the state is",state.at, new Date(state.at).toLocaleFormat());
+			uiRadio.scrobble(state.isAuthorised, state.name, new Date(state.at));
 			
 		},
 	};
 
-	// portMocking.useMocking = false;
+	portMocking.useMocking = false;
 	if(!portMocking.useMocking)
 	{
 		self.port.on("LastFMStatus", function(obj){
@@ -1003,6 +1037,9 @@
 		self.port.on("lastfm_artistinfo", function(obj){
 			portMocking.responseLastFMArtist(obj.code, obj.data);
 		});
+		self.port.on("options", function(obj){
+			portMocking.responseOptions(obj);
+		});
 	}
 
 	Player.initialise();
@@ -1011,6 +1048,6 @@
 
     uiRadio.deferUpdateUi();
 
-    portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised"});
+    portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised", at: new Date()});
 
 // }());
