@@ -138,8 +138,46 @@
 		 a.addEventListener("loadend", function() {Player.state.unwaiting(); } );
 		 a.addEventListener("canplay", function(e) {Player.state.unwaiting(); } );
 		 // a.addEventListener("progress", function(e) { console.log("progress", e); } );
+		 a.addEventListener("loadedmetadata", function(e) { console.log("loadedmetadata", e); } );
+
 		},
 
+	};
+	var RequestTimers = { // prevent unique requests blocking ui/other updates
+		timers: {},
+		findTimer: function(timer)
+		{
+			var timerObj;
+			if(timerObj = this.timers[timer])
+				return timerObj;
+			else{
+				timerObj = {timerTimeout: -1};
+				this.timers[timer] = timerObj;
+				return this.timers[timer];
+			}
+		},
+		setRequestTimeout: function(timer, callback){
+			var timerObj = this.findTimer(timer);
+			if(timerObj.timerTimeout != -1)
+			{
+				clearTimeout(timerObj.timerTimeout);
+				timerObj.timerTimeout = -1;
+			}
+			timerObj.timerTimeout = setTimeout(
+				function(){
+				 _callQuasiFunction(callback);
+				}, 
+			1000 * 30); // 30sec
+
+		},
+		stopTimeout: function(timer){
+			var timerObj = this.findTimer(timer);
+			if(timerObj.timerTimeout != -1)
+			{
+				clearTimeout(timerObj.timerTimeout);
+				timerObj.timerTimeout = -1;
+			}
+		}
 	};
 	var CoverImageLoader = {
 		loadingCallback: null,
@@ -204,7 +242,7 @@
 		setStateChangeCallback: function(onChange){
 			this.onStateChange = onChange;
 		},
-
+		
 		getCover: function (artist, track, onLoad){
 			if(this.loadingCover)
 			{
@@ -212,15 +250,24 @@
 				return;
 			}
 			this.loadingCover = true;
+			_callQuasiFunction(this.onStateChange, null);
 			this.loadingCallback = onLoad;
 			this.trackRequest = {artist: artist, track: track}; 
-			portMocking.requestLastFMTrack(artist, track);
-			_callQuasiFunction(this.onStateChange, null);
+			portMocking.requestLastFMTrack(artist, track);			
+
+			var self = this;
+			RequestTimers.setRequestTimeout("lastfmCover", function(){
+				self.loadingCover = false;
+				console.log("lastfm loadingCover timed out")
+				_callQuasiFunction(self.onStateChange, null);
+			});
 		},
 		portTrack: function(status, data){
 			if(status === 200)
 			{
 				this.loadingCover = false;
+				RequestTimers.stopTimeout("lastfmCover");
+
 				_callQuasiFunction(this.onStateChange, null);
 
 				if( typeof data.track !== "undefined" && 
@@ -239,6 +286,8 @@
 		},
 		portArtist: function(status, data){
 			this.loadingCover = false;
+			RequestTimers.stopTimeout("lastfmCover");
+
 			_callQuasiFunction(this.onStateChange, null);
 
 			if( typeof data.artist !== "undefined" && 
@@ -262,9 +311,18 @@
 			this.requestScrobble = true;
 			_callQuasiFunction(this.onStateChange, null);
 			portMocking.requestLastFMScrobble(artist, track);
+
+			var self = this;
+			RequestTimers.setRequestTimeout("lastfmScrobble", function(){
+				self.loadingCover = false;
+				console.log("lastfm scrobble timed out")
+				_callQuasiFunction(self.onStateChange, null);
+			});
 		},
 		portScrobble: function(){
 			this.requestScrobble = false;
+			RequestTimers.stopTimeout("lastfmScrobble");
+
 			_callQuasiFunction(this.onStateChange, null);
 		}
 	};
@@ -294,6 +352,13 @@
 
 			this.loadingCallback = onLoad;
 			portMocking.requestXSPF(this.xspfUrl);
+
+			var self = this;
+			RequestTimers.setRequestTimeout("xspf", function(){
+				self.loadingXSPF = false;
+				console.log("xspf timed out")
+				_callQuasiFunction(self.onStateChange, null);
+			});
 		},
 		parseXSPFdata: function(xmlstring){
 			var xspf = _parseXml(xmlstring);
@@ -329,6 +394,7 @@
 		},
 		portXSPF: function(status, data){
 			this.loadingXSPF = false;
+			RequestTimers.stopTimeout("xspf");
 			_callQuasiFunction(this.onStateChange, null);
 
 			data = (status === 200? this.parseXSPFdata(data): {error: 1});
@@ -344,6 +410,7 @@
 		setStateChangeCallback: function(onChange){
 			this.onStateChange = onChange;
 		},
+
 		getM3Udata: function(onLoad){
 			if(this.loadingM3U)
 			{
@@ -355,9 +422,17 @@
 
 			this.loadingCallback = onLoad;
 			portMocking.requestM3U();
+
+			var self = this;
+			RequestTimers.setRequestTimeout("m3u", function(){
+				self.loadingM3U = false;
+				console.log("m3u timed out")
+				_callQuasiFunction(self.onStateChange, null);
+			});
 		},
 		portM3U: function(status, data){
 			this.loadingM3U = false;
+			RequestTimers.stopTimeout("m3u");
 			_callQuasiFunction(this.onStateChange, null);
 
 			data = (status === 200? this.parseM3Udata(data.m3u, data.isShoutcastServer): {error: 1});
@@ -445,20 +520,25 @@
 						||
 						(chkd >= "а".charCodeAt(0) &&
 					   chkd <= "я".charCodeAt(0))
+						||
+						(chkd >= "0".charCodeAt(0) &&
+					   chkd <= "9".charCodeAt(0))
 						|| chra === "&"
-						|| chra === "?"
-						|| chra === "!"
+						|| chra === "?" || chra === "!" || chra === "."						
 						|| chra === " "
-						|| chra === "'"
-						|| chra === '"'
+						|| chra === "'" || chra === '"'
 						|| chra === "(" || chra === ")"
 						)
 					{
 						result += chra;
 					}else
+					if(chra === "-" && result.length > 0)
+						result += "-";
+					else
 					if( chra === "_")
 						result += " ";
 				};
+
 				return result;
 			},
 			setTitle: function(artist, title){
@@ -921,7 +1001,10 @@
 '  <creator/>',
 '  <trackList>',
 '    <track>',
+
+//'      <location>http://94.25.53.131:80/ultraNEW-320.mp3.m3u</location>',
 '      <location>http://94.25.53.131:80/ultra-128.mp3</location>',
+
 '      <title>10 Years - Actions & Motives</title>',
 '      <annotation>Stream Title: Radio ULTRA Online',
 'Stream Description: Radio ULTRA Online',
@@ -929,7 +1012,7 @@
 '      <info>http://www.radioultra.ru</info>',
 '    </track>',
 '  </trackList>',
-'</playlist>'].join('\n'));}, 2000);
+'</playlist>'].join('\n'));}, 4000);
 
 			}else{
 				self.port.emit('loadXSPF', {url: url});
