@@ -682,7 +682,7 @@
 			{
 				var d = at;
 
-				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : "авторизоваться с LastFM");
+				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : "аутентификация LastFM");
 				this.lastfmUser.textContent = _escapeHTML(username?username:"");
 				this.lastfmsessLinkOff.style.display = enabled? "block":"none" ;
 				this.lfenabled.style.display = enabled? "":"none" ;

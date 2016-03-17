@@ -1,0 +1,6 @@
+.*
+*
+!/data/**
+!/lib/**
+!/icon.png
+!/package.json
