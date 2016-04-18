@@ -126,6 +126,7 @@
 			this.state.audioElement.src = '';
 			this.state.audioElement.removeAttribute("src");
 			this.state.stopped();
+			RequestTimers.stopTimeout("errorwaitsuspend");
 		},
 		setVolume: function(val){
 			this.state.audioElement.volume = parseInt(val) * .01;
@@ -144,24 +145,48 @@
 		initialise: function (){
 		 this.state.audioElement = document.querySelector('audio#player-audio');
 		 var a = this.state.audioElement;
-		 a.addEventListener("playing", function() {Player.state.playing(); } );
-		 a.addEventListener("waiting", function() {Player.state.waiting(); } );
+		 a.addEventListener("playing", function() {Player.state.playing(); console.log("playing"); Player._suspending(false); } );
+		 a.addEventListener("waiting", function() {Player.state.waiting(); console.log("waiting"); } );
 		 a.addEventListener("error", function(e) { console.warn('error', JSON.stringify(e)); /*Player.stop();*/ Player.state.error(); } );
 
-		 a.addEventListener("suspend", function(e) { console.warn('suspend', JSON.stringify(e)); Player.state.unwaiting(); } );// ??????????? panel hiding => suspending?
+		 a.addEventListener("suspend", function(e) { console.warn('suspend', JSON.stringify(e)); Player.state.unwaiting(); Player._suspending(true); } );// ??????????? panel hiding => suspending?
 		 a.addEventListener("ended", function() {Player.state.stopped(); } );
-		 a.addEventListener("stalled", function() {Player.state.waiting(); console.warn('stalled') } ); 
+		 a.addEventListener("stalled", function() {Player.state.waiting(); console.warn('stalled'); } ); 
 		 
-		 a.addEventListener("abort", function() {Player.state.stopped(); } ); 
+		 a.addEventListener("abort", function() {  Player.state.stopped(); } ); 
 
-		 a.addEventListener("loadstart", function() {Player.state.waiting(); } );
-		 a.addEventListener("loadend", function() {Player.state.unwaiting(); } );
-		 a.addEventListener("canplay", function(e) {Player.state.unwaiting(); } );
+		 a.addEventListener("loadstart", function() {Player.state.waiting(); console.log('loadstart');  } );
+		 a.addEventListener("loadend", function() {Player.state.unwaiting();  console.log('loadend'); } );
+		 a.addEventListener("canplay", function(e) {Player.state.unwaiting();  console.log('canplay'); } );
 		 // a.addEventListener("progress", function(e) { console.log("progress", e); } );
 		 a.addEventListener("loadedmetadata", function(e) { console.log("loadedmetadata", e); } );
 
+	     // a.addEventListener("progress", function() { console.log('progress'); } ); 
 		},
-
+		_suspendingPrevTime: -1,
+		_suspending : function(_susp)
+		{
+			/*if(_susp)
+			{*/
+				RequestTimers.setRequestTimeout("errorwaitsuspend", function()
+				{
+					if(Player.state.audioElement.currentTime !== 0 
+						&& Player.state.audioElement.currentTime === Player._suspendingPrevTime)
+					{
+						console.warn('playing suspeding detected, error invokation...')
+						Player.state.error();
+					}else
+					{
+						Player._suspendingPrevTime = Player.state.audioElement.currentTime;
+						setTimeout(function(){Player._suspending(true);}, 0);
+					}
+					
+				}, 10000);
+			/*}else
+			{
+				RequestTimers.stopTimeout("errorwaitsuspend");
+			}*/
+		}
 	};
 	var RequestTimers = { // prevent unique requests blocking ui/other updates
 		timers: {},
@@ -192,7 +217,7 @@
 		},
 		stopTimeout: function(timer){
 			var timerObj = this.findTimer(timer);
-			if(timerObj.timerTimeout != -1)
+			if(timerObj.timerTimeout !== -1)
 			{
 				clearTimeout(timerObj.timerTimeout);
 				timerObj.timerTimeout = -1;
@@ -499,7 +524,12 @@
 		{
 			var args = Array.prototype.slice.call(arguments);
 			args.splice(0,2);
-			foo.apply(bar, args);
+			try {
+				foo.apply(bar, args);
+			}catch(_exceptfoo)
+			{
+				console.error("error while invoke function", foo, _exceptfoo);
+			}
 		}
     	else console.error("trying to invoke inconsistent function", foo);
     };
