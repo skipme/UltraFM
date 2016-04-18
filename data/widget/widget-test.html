@@ -4,20 +4,19 @@
   <meta charset="utf-8">
   <link href="css/generic.css" rel="stylesheet" type="text/css" />
   <link href="css/popup.css" rel="stylesheet" type="text/css" />
-  <style type="text/css">
-    @-moz-keyframes tAnim {
-      from { background-position: 0px 0px; }
-      to {background-position: -6100px 0px;}
-    }
-
-    #tanim {
-      animation: 11s steps(100, end) 0s normal none infinite tAnim;
+<style type="text/css">
+#tanim {
+      animation: 11s steps(100, end) 0s normal none infinite Anim;
       background: url("images/reslt.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
       width: 61px;
       height: 61px;
       left: 56px;
       position: relative;
   }
+@keyframes Anim {
+  from { background-position: 0px 0px; }
+  to {background-position: -6100px 0px;}
+}
   #logostat {
       background: url("images/logo.png") no-repeat 0 0 rgba(0, 0, 0, 0);
       height: 61px;
@@ -33,7 +32,7 @@
     top: 50px;
     width: 64px;
     cursor: pointer;
-    -moz-transition: all 0.3s ease-out;
+    transition: all 0.3s ease-out;
     opacity: 0.7;
     z-index: 22;
   }
@@ -42,7 +41,7 @@
     right: -20px;
   }
   .panel {
-    -moz-transition: left 0.7s ease-out;
+    transition: left 0.7s ease-out;
     position: absolute;
   }
   .panel-active {

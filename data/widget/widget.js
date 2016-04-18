@@ -6,6 +6,7 @@
 			volumeLevel: 0,
 			streamSource: null,
 			isMute: false,
+			reconnectAttempts: -1,
 			ensureSource: function(){
 				if(typeof this.streamSource === 'undefined' || 
 					this.streamSource === null)
@@ -36,6 +37,7 @@
 				this.playingStream = true; 
 				this.waitingStream = false;
 				this.errorStream = false;
+				this.reconnectAttempts = 1;
 				this.invokeStateChangeCallback();
 			},
 			waiting: function(){ 
@@ -49,12 +51,30 @@
 				this.invokeStateChangeCallback();
 			},
 			error: function(){ 
+				if(this.playingStream && this.reconnectAttempts > 0)
+				{			
+					var that = this;
+					RequestTimers.setRequestTimeout("replay", function()
+					{
+						if(!that.playingStream && !that.waitingStream)
+						{
+							console.log('play attempt')
+							Player.play();
+							that.reconnectAttempts--;
+						}else{
+							console.log('skip attempt due loading already')
+						}
+					}, 5000);// 5 sec next attempt
+				}
+
 				this.playingStream = false; 
 				this.waitingStream = false;
 				this.errorStream = true;
+				Player.stop();
 				this.invokeStateChangeCallback();
 			},
 			stopped: function(){ 
+				console.log('stopped')
 				this.playingStream = false; 
 				this.waitingStream = false;
 				this.errorStream = false;
@@ -126,11 +146,11 @@
 		 var a = this.state.audioElement;
 		 a.addEventListener("playing", function() {Player.state.playing(); } );
 		 a.addEventListener("waiting", function() {Player.state.waiting(); } );
-		 a.addEventListener("error", function(e) { Player.stop(); Player.state.error(); } );
+		 a.addEventListener("error", function(e) { console.warn('error', JSON.stringify(e)); /*Player.stop();*/ Player.state.error(); } );
 
-		 a.addEventListener("suspend", function(e) { console.log(e); Player.state.unwaiting(); } );// ??????????? panel hiding => suspending?
+		 a.addEventListener("suspend", function(e) { console.warn('suspend', JSON.stringify(e)); Player.state.unwaiting(); } );// ??????????? panel hiding => suspending?
 		 a.addEventListener("ended", function() {Player.state.stopped(); } );
-		 a.addEventListener("stalled", function() {Player.state.waiting(); } ); 
+		 a.addEventListener("stalled", function() {Player.state.waiting(); console.warn('stalled') } ); 
 		 
 		 a.addEventListener("abort", function() {Player.state.stopped(); } ); 
 
@@ -148,7 +168,7 @@
 		findTimer: function(timer)
 		{
 			var timerObj;
-			if(timerObj = this.timers[timer])
+			if((timerObj = this.timers[timer]) !== undefined)
 				return timerObj;
 			else{
 				timerObj = {timerTimeout: -1};
@@ -156,7 +176,7 @@
 				return this.timers[timer];
 			}
 		},
-		setRequestTimeout: function(timer, callback){
+		setRequestTimeout: function(timer, callback, _millisecs){
 			var timerObj = this.findTimer(timer);
 			if(timerObj.timerTimeout != -1)
 			{
@@ -167,7 +187,7 @@
 				function(){
 				 _callQuasiFunction(callback);
 				}, 
-			1000 * 30); // 30sec
+			((typeof _millisecs) === 'number')? _millisecs : 1000 * 30); // 30sec
 
 		},
 		stopTimeout: function(timer){
@@ -469,7 +489,7 @@
 	};
 
 	var _parseXml = function(xmlStr) {
-        return ( new window.DOMParser() ).parseFromString(xmlStr, "text/xml");
+        return ( new window.DOMParser() ).parseFromString(xmlStr, "application/xml");// ! printing to console if xml contains syntax errors (uncorrect ...) with page src uri
     };
     var _isFunction = function(quasi){
     	return (typeof quasi !== "undefined" && typeof quasi === "function");
@@ -550,7 +570,7 @@
 					this.metaFilled = true;
 					uiRadio.deferUpdateUi();
 
-					if(uiRadio.allowedLASTFMoption)
+					if(uiRadio.allowedLASTFMoption && this.artist !== 'UltraFM')
 					{
 						this.scrobbleCurrentComposition();
 						LastFM.getCover(this.artist, this.title, function(status, data)
@@ -665,8 +685,8 @@
 				this.busyAnimation.style.display = (show? 'block' : 'none');
 			},
 			setTitle: function(artist, title){
-				this.artist.textContent = artist;
-				this.song.textContent = title;
+				this.artist.innerHTML = _escapeHTML(artist);
+				this.song.innerHTML = _escapeHTML(title);
 				this.avk.href = 'http://vk.com/audio?q=' +_escapeHTML(artist) +' - '+ _escapeHTML(title);
 				this.alastfm.href = 'http://last.fm/music/'+_escapeHTML(artist)+'/_/'+_escapeHTML(title);
 			},
@@ -979,7 +999,8 @@
 			if(this.useMocking)
 			{
 				setTimeout(function(){
-					portMocking.responseM3U(200, {m3u: "http://94.25.53.132:80/ultra-128.mp3"});
+					portMocking.responseM3U(200, {m3u: "http://nashe1.hostingradio.ru:80/ultra-192.mp3"});
+					// portMocking.responseM3U(200, {m3u: "http://94.25.53.132:80/ultra-128.mp3"});
 					// portMocking.responseM3U(200, {m3u: ["#", "http://193.35.52.62:8113/"].join("\n"), isShoutcastServer: true});
 				}, 2000);
 			}else{
