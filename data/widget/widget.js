@@ -1,5 +1,7 @@
 // (function(){
-
+	$console = {log: function(){}, warn: function(){}, error: function(){}}
+	//DEBUG:
+	// $console = console
 	var Player = {
 		
 		state: {
@@ -58,11 +60,11 @@
 					{
 						if(!that.playingStream && !that.waitingStream)
 						{
-							console.log('play attempt')
+							$console.log('play attempt')
 							Player.play();
 							that.reconnectAttempts--;
 						}else{
-							console.log('skip attempt due loading already')
+							$console.log('skip attempt due loading already')
 						}
 					}, 5000);// 5 sec next attempt
 				}
@@ -74,7 +76,7 @@
 				this.invokeStateChangeCallback();
 			},
 			stopped: function(){ 
-				console.log('stopped')
+				$console.log('stopped')
 				this.playingStream = false; 
 				this.waitingStream = false;
 				this.errorStream = false;
@@ -118,7 +120,7 @@
 				this.state.connecting();
 				this.state.audioElement.play();
 			}else{
-				console.error("set source before playing...");
+				$console.error("set source before playing...");
 			}
 		},
 		stop: function (){			
@@ -145,23 +147,23 @@
 		initialise: function (){
 		 this.state.audioElement = document.querySelector('audio#player-audio');
 		 var a = this.state.audioElement;
-		 a.addEventListener("playing", function() {Player.state.playing(); console.log("playing"); Player._suspending(false); } );
-		 a.addEventListener("waiting", function() {Player.state.waiting(); console.log("waiting"); } );
-		 a.addEventListener("error", function(e) { console.warn('error', JSON.stringify(e)); /*Player.stop();*/ Player.state.error(); } );
+		 a.addEventListener("playing", function() {Player.state.playing(); $console.log("playing"); Player._suspending(false); } );
+		 a.addEventListener("waiting", function() {Player.state.waiting(); $console.log("waiting"); } );
+		 a.addEventListener("error", function(e) { $console.warn('error', JSON.stringify(e)); /*Player.stop();*/ Player.state.error(); } );
 
-		 a.addEventListener("suspend", function(e) { console.warn('suspend', JSON.stringify(e)); Player.state.unwaiting(); Player._suspending(true); } );// ??????????? panel hiding => suspending?
+		 a.addEventListener("suspend", function(e) { $console.warn('suspend', JSON.stringify(e)); Player.state.unwaiting(); Player._suspending(true); } );// ??????????? panel hiding => suspending?
 		 a.addEventListener("ended", function() {Player.state.stopped(); } );
-		 a.addEventListener("stalled", function() {Player.state.waiting(); console.warn('stalled'); } ); 
+		 a.addEventListener("stalled", function() {Player.state.waiting(); $console.warn('stalled'); } ); 
 		 
 		 a.addEventListener("abort", function() {  Player.state.stopped(); } ); 
 
-		 a.addEventListener("loadstart", function() {Player.state.waiting(); console.log('loadstart');  } );
-		 a.addEventListener("loadend", function() {Player.state.unwaiting();  console.log('loadend'); } );
-		 a.addEventListener("canplay", function(e) {Player.state.unwaiting();  console.log('canplay'); } );
-		 // a.addEventListener("progress", function(e) { console.log("progress", e); } );
-		 a.addEventListener("loadedmetadata", function(e) { console.log("loadedmetadata", e); } );
+		 a.addEventListener("loadstart", function() {Player.state.waiting(); $console.log('loadstart');  } );
+		 a.addEventListener("loadend", function() {Player.state.unwaiting();  $console.log('loadend'); } );
+		 a.addEventListener("canplay", function(e) {Player.state.unwaiting();  $console.log('canplay'); } );
+		 // a.addEventListener("progress", function(e) { $console.log("progress", e); } );
+		 a.addEventListener("loadedmetadata", function(e) { $console.log("loadedmetadata", e); } );
 
-	     // a.addEventListener("progress", function() { console.log('progress'); } ); 
+	     // a.addEventListener("progress", function() { $console.log('progress'); } ); 
 		},
 		_suspendingPrevTime: -1,
 		_suspending : function(_susp)
@@ -173,7 +175,7 @@
 					if(Player.state.audioElement.currentTime !== 0 
 						&& Player.state.audioElement.currentTime === Player._suspendingPrevTime)
 					{
-						console.warn('playing suspeding detected, error invokation...')
+						$console.warn('playing suspeding detected, error invokation...')
 						Player.state.error();
 					}else
 					{
@@ -254,7 +256,7 @@
 		    this.img.onerror = function(){
 		        CoverImageLoader.loadingCoverImage = false;
 		        _callQuasiFunction(CoverImageLoader.onStateChange, null);
-		        console.log("image url error", url);
+		        $console.log("image url error", url);
 		    };
 		    if(this.timeoutId !== -1)
 		    {	
@@ -267,7 +269,7 @@
 		    		CoverImageLoader.loadingCoverImage = false;
 		    		_callQuasiFunction(CoverImageLoader.onStateChange, null);
 		    		_callQuasiFunction(onLoad, null, -1, {url: url});
-		        	console.log("image url timed out", url);
+		        	$console.log("image url timed out", url);
 		    	}
 		    	CoverImageLoader.timeoutId = -1;
 		    }, 10000);
@@ -303,7 +305,7 @@
 			var self = this;
 			RequestTimers.setRequestTimeout("lastfmCover", function(){
 				self.loadingCover = false;
-				console.log("lastfm loadingCover timed out")
+				$console.log("lastfm loadingCover timed out")
 				_callQuasiFunction(self.onStateChange, null);
 			});
 		},
@@ -360,7 +362,7 @@
 			var self = this;
 			RequestTimers.setRequestTimeout("lastfmScrobble", function(){
 				self.loadingCover = false;
-				console.log("lastfm scrobble timed out")
+				$console.log("lastfm scrobble timed out")
 				_callQuasiFunction(self.onStateChange, null);
 			});
 		},
@@ -401,7 +403,7 @@
 			var self = this;
 			RequestTimers.setRequestTimeout("xspf", function(){
 				self.loadingXSPF = false;
-				console.log("xspf timed out")
+				$console.log("xspf timed out")
 				_callQuasiFunction(self.onStateChange, null);
 			});
 		},
@@ -417,7 +419,7 @@
 
 				return {artist: artistAndTitle[0], title: artistAndTitle[1]};
 			}catch(e){
-				console.warn("can't parse xspf data");
+				$console.warn("can't parse xspf data");
 			}
 			return null;
 		},
@@ -471,7 +473,7 @@
 			var self = this;
 			RequestTimers.setRequestTimeout("m3u", function(){
 				self.loadingM3U = false;
-				console.log("m3u timed out")
+				$console.log("m3u timed out")
 				_callQuasiFunction(self.onStateChange, null);
 			});
 		},
@@ -530,10 +532,10 @@
 				foo.apply(bar, args);
 			}catch(_exceptfoo)
 			{
-				console.error("error while invoke function", foo, _exceptfoo);
+				$console.error("error while invoke function", foo, _exceptfoo);
 			}
 		}
-    	else console.error("trying to invoke inconsistent function", foo);
+    	else $console.error("trying to invoke inconsistent function", foo);
     };
 
     function _escapeHTML(str) { return str.replace(/[&"<>]/g, function (m) { return _escapeHTML.replacements[m];}); };
@@ -611,7 +613,7 @@
 							{
 								uiRadio.trackMetaInformation.setCoverUrl(data.url);
 							}else{
-								console.error("LastFM track/artist loading error");
+								$console.error("LastFM track/artist loading error");
 
 								uiRadio.trackMetaInformation.setDefaultCover();
 								uiRadio.deferUpdateUi();
@@ -785,7 +787,7 @@
 			{
 				this.opt_savesess. // 
 				addEventListener("click", function(e) {
-					console.log("checker", e.target.checked)
+					$console.log("checker", e.target.checked)
 					uiRadio.options_state.saveLFMSess	= e.target.checked;
 					uiRadio.optionsUiChange();			
 				});
@@ -827,7 +829,7 @@
 		optionsUiChange: function(){
 			var optex = {saveLFMSess: (this.options_state.saveLFMSess || false), tag_selected: this.options_state.tag_selected, volume_level:  this.options_state.volume_level}
 			portMocking.requestOptions(optex);
-			console.log("ui opts change", optex)
+			$console.log("ui opts change", optex)
 		},
 		isRadioBusy: function(){
 			return Player.isWaiting() || 
@@ -862,7 +864,7 @@
 			this.elements.setTitle(this.trackMetaInformation.artist, this.trackMetaInformation.title);
 			this.elements.setCoverUrl(this.trackMetaInformation.coverUrl);
 
-			console.log("full ui update");
+			$console.log("full ui update");
 		},
 		updateUIBusy: function(){
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
@@ -886,18 +888,18 @@
 				addEventListener("click", function(e) {
 					if(Player.isWaiting() || Player.isPlaying())
 					{
-						console.log("radio is busy")
+						$console.log("radio is busy")
 						return;
 					}
 					if(uiRadio.options_state.tag_selected === undefined)
 					{
-						console.log("select tag first")
+						$console.log("select tag first")
 						return;
 					}
 					M3U.getM3Udata(uiRadio.options_state.tag_selected, function(code, data){
 						if(code !== 200 || data === null || data.error)
 						{
-							console.log("nothing to play...");
+							$console.log("nothing to play...");
 						}else{
 							Player.setSource(data.mp3);
 							XSPF.xspfUrl = data.xspf;
@@ -914,7 +916,7 @@
 				});
 
 			Player.setStateChangeCallback(function(s){
-				console.log("schange: ", s.stateString());
+				$console.log("schange: ", s.stateString());
 				uiRadio.checkPeriodicTrackInfoUpdate();
 				if(!Player.isPlaying())
 				{
@@ -985,7 +987,7 @@
 						uiRadio.deferUpdateUi();
 					}else{
 						if(data.error)
-							console.error("XSPF data loading error");
+							$console.error("XSPF data loading error");
 					}
 				});
 			}
@@ -1033,7 +1035,7 @@
 
 			this.elements.showOptions(false);// hide options panel
 
-			console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
+			$console.log("lastfm options: ", enable?"scrobble":"", enable?("as " +name):"");
 		},
 		options: function(opts){
 			if(opts === null || opts === undefined)
@@ -1091,14 +1093,14 @@
 		},
 		responseLastFMScrobble: function(status) {
 			if(status===200)
-				console.log("scrobbled for: ", LastFM.state.username);
-			else console.warn("scrobbling error");
+				$console.log("scrobbled for: ", LastFM.state.username);
+			else $console.warn("scrobbling error");
 			LastFM.portScrobble();
 		},
 		requestBeep: function(){
 			if(this.useMocking)
 			{
-				// console.log("beep");
+				// $console.log("beep");
 			}else{
 				self.port.emit('beep', {});
 			}
@@ -1117,7 +1119,7 @@
 				self.port.emit('closeLastFMSession', {});
 		},
 		requestM3U: function(tag){
-			console.log("request m3u with tag ", tag);
+			$console.log("request m3u with tag ", tag);
 			if(this.useMocking)
 			{
 				setTimeout(function(){
@@ -1130,7 +1132,7 @@
 			}
 		},
 		responseM3U: function(status, data){
-			console.log("m3u port response", status);
+			$console.log("m3u port response", status);
 			M3U.portM3U(status, data);
 		},
 		requestXSPF: function(url){
@@ -1162,7 +1164,7 @@
 			}
 		},
 		responseXSPF: function(status, data){
-			console.log("xspf port response", status);
+			$console.log("xspf port response", status);
 			XSPF.portXSPF(status, data);
 		},
 		requestLastFMArtist: function(artist){
@@ -1203,7 +1205,7 @@
 			}
 		},
 		responseLastFMArtist: function(status, data){
-			console.log("LastFM Artist port response", status);
+			$console.log("LastFM Artist port response", status);
 			LastFM.portArtist(status, data);
 		},
 		requestLastFMTrack: function(artist, track){
@@ -1264,12 +1266,12 @@
 			}
 		},
 		responseLastFMTrack: function(status, data){
-			console.log("LastFM Track port response", status);
+			$console.log("LastFM Track port response", status);
 			LastFM.portTrack(status, data);
 		},
 
 		portLastFMStatus: function(state){
-			console.log("the state is",state.at, new Date(state.at).toLocaleFormat());
+			$console.log("the state is",state.at, new Date(state.at).toLocaleFormat());
 			uiRadio.scrobble(state.isAuthorised, state.name, new Date(state.at));
 			
 		},
@@ -1290,13 +1292,13 @@
 		{
 			if(status === 200)
 			{
-				console.log("got tags: ", data.tags);
+				$console.log("got tags: ", data.tags);
 				var tags = data.tags.split(',');
 				uiRadio.optionTags(tags);
 			}
 			else
 			{
-				console.log("tags not optioned: ", data.tags);
+				$console.log("tags not optioned: ", data.tags);
 				uiRadio.optionTags([]);
 			}
 		}
