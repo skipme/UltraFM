@@ -715,8 +715,8 @@
 				this.busyAnimation.style.display = (show? 'block' : 'none');
 			},
 			setTitle: function(artist, title){
-				this.artist.innerHTML = _escapeHTML(artist);
-				this.song.innerHTML = _escapeHTML(title);
+				this.artist.textContent = _escapeHTML(artist);
+				this.song.textContent = _escapeHTML(title);
 				this.avk.href = 'http://vk.com/audio?q=' +_escapeHTML(artist) +' - '+ _escapeHTML(title);
 				this.alastfm.href = 'http://last.fm/music/'+_escapeHTML(artist)+'/_/'+_escapeHTML(title);
 			},
