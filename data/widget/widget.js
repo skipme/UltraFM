@@ -480,7 +480,9 @@
 			RequestTimers.stopTimeout("m3u");
 			_callQuasiFunction(this.onStateChange, null);
 
+			var tag = data.tag;
 			data = (status === 200? this.parseM3Udata(data.m3u, data.isShoutcastServer): {error: 1});
+			data.tag = tag;
 			_callQuasiFunction(this.loadingCallback, null, status, data);
 		},
 		parseM3Udata: function(xmlstring, shoutcastServer){
@@ -807,8 +809,14 @@
 					input.type="radio"; 
 					input.id="opt_brate_"+array_tags[i];
 					input.value = array_tags[i];
-					if(this.options_state && this.options_state.tag_selected === array_tags[i])
+					if(uiRadio.options_state && uiRadio.options_state.tag_selected === array_tags[i])
 						input.checked = "checked";
+					input.addEventListener("change", function(e) {
+						
+						uiRadio.options_state.tag_selected	= e.target.value;
+						uiRadio.optionsUiChange();			
+					});
+
 					lab.appendChild(input);
 					tagsContainer.appendChild(lab);
 					tagsContainer.appendChild(document.createElement("br"));
@@ -817,8 +825,9 @@
 		},
 		options_state: {},
 		optionsUiChange: function(){
-			portMocking.requestOptions(this.options_state);
-			console.log("ui opts change", this.options_state)
+			var optex = {saveLFMSess: (this.options_state.saveLFMSess || false), tag_selected: this.options_state.tag_selected}
+			portMocking.requestOptions(optex);
+			console.log("ui opts change", optex)
 		},
 		isRadioBusy: function(){
 			return Player.isWaiting() || 
@@ -859,7 +868,8 @@
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
 			for (var i = 0; i < this.options_state.tags.length; i++) 
 			{
-				var _thisselected = this.options_state.tag_selected !== undefined && this.options_state.tag_selected === this.options_state.tag_playing;
+				var _thisselected =( this.options_state.tag_playing !== undefined)
+				 && (this.options_state.tags[i] === this.options_state.tag_playing);
 				var lab = document.getElementById("opt_brate_l_"+this.options_state.tags[i])
 				lab.firstChild.textContent = (_thisselected?"[+] ":"[-] ") + this.options_state.tags[i];
 			}
@@ -871,6 +881,7 @@
 					var currentVolume = e.target.value;
 					uiRadio.setVolume(currentVolume, true);
 				});
+
 			this.buttons.play. // PLAY
 				addEventListener("click", function(e) {
 					if(Player.isWaiting() || Player.isPlaying())
@@ -878,7 +889,12 @@
 						console.log("radio is busy")
 						return;
 					}
-					M3U.getM3Udata(function(code, data){
+					if(uiRadio.options_state.tag_selected === undefined)
+					{
+						console.log("select tag first")
+						return;
+					}
+					M3U.getM3Udata(uiRadio.options_state.tag_selected, function(code, data){
 						if(code !== 200 || data === null || data.error)
 						{
 							console.log("nothing to play...");
@@ -886,6 +902,7 @@
 							Player.setSource(data.mp3);
 							XSPF.xspfUrl = data.xspf;
 							Player.play();	
+							uiRadio.options_state.tag_playing = data.tag;
 						}
 					})
 					
@@ -1029,6 +1046,9 @@
 		optionTags: function(tags)
 		{
 			this.options_state.tags = tags;	
+			if(this.options_state.tag_selected === undefined)
+				this.options_state.tag_selected = tags[0];
+
 			this.options(this.options_state);
 		}
 	};
