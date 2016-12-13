@@ -456,7 +456,7 @@
 			this.onStateChange = onChange;
 		},
 
-		getM3Udata: function(onLoad){
+		getM3Udata: function(tag, onLoad){
 			if(this.loadingM3U)
 			{
 				_callQuasiFunction(onLoad, null, -1, {error: 1});
@@ -466,7 +466,7 @@
 			_callQuasiFunction(this.onStateChange, null);
 
 			this.loadingCallback = onLoad;
-			portMocking.requestM3U();
+			portMocking.requestM3U(tag);
 
 			var self = this;
 			RequestTimers.setRequestTimeout("m3u", function(){
@@ -676,7 +676,9 @@
 			artist: null,
 			song: null,
 			cover: null,
-			lastfmsessLink: null,
+			lastfmsessLinkdo: null,
+			lastfmsessLinkok: null,
+			lastfmtimecon: null,
 			lastfmUser: null,
 			lfenabled: null,
 			firet: null,
@@ -688,6 +690,7 @@
 			alastfm: null,
 			agith: null,
 			opt_savesess: null,
+			tagsContainer: null,
 
 			assignElements: function(){
 				this.busyAnimation = document.getElementById('connecting');
@@ -696,8 +699,10 @@
 	      		this.artist = document.querySelector(".artist");
 				this.song   = document.querySelector(".song");
       			this.cover  = document.getElementsByClassName("half");
-      			this.lastfmsessLink = document.getElementById('createLastFMSession');
+      			this.lastfmsessLinkdo = document.getElementById('createLastFMSession_do');
+      			this.lastfmsessLinkok = document.getElementById('createLastFMSession_ok');
       			this.lastfmsessLinkOff = document.getElementById('closeLastFMSession');
+      			this.lastfmtimecon = document.getElementById('timecon');
       			this.lfenabled = document.getElementById('lfenabled');
       			this.lastfmUser = document.getElementById('lastfm-user');
       			this.firet = document.getElementById('tanim');
@@ -708,6 +713,7 @@
       			this.alastfm = document.querySelector('.icon.lastfm');
       			this.agith = document.querySelector('.icon.github');
       			this.opt_savesess = document.getElementById('opt_savesess');
+      			this.tagsContainer = document.getElementById('tagsContainer');
 
       			this.assignEvents();
 			},
@@ -731,8 +737,18 @@
 			updateScrobbleInfo: function(enabled, username, at)
 			{
 				var d = at;
-
-				this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : "аутентификация LastFM");
+				if(enabled)
+				{
+					this.lastfmsessLinkdo.style.display = "none";
+					this.lastfmsessLinkok.style.display = "block";
+					this.lastfmtimecon.style.display = "block";
+					this.lastfmtimecon.textContent = d.toLocaleString();
+				}else{
+					this.lastfmsessLinkdo.style.display = "block";
+					this.lastfmsessLinkok.style.display = "none";
+					this.lastfmtimecon.style.display = "none";
+				}
+				// this.lastfmsessLink.textContent = _escapeHTML(enabled?("соединено "+ d.toLocaleString()) : _("opt_lfm_connectcmd.do"));
 				this.lastfmUser.textContent = _escapeHTML(username?username:"");
 				this.lastfmsessLinkOff.style.display = enabled? "block":"none" ;
 				this.lfenabled.style.display = enabled? "":"none" ;
@@ -771,7 +787,33 @@
 					uiRadio.options_state.saveLFMSess	= e.target.checked;
 					uiRadio.optionsUiChange();			
 				});
-			}
+			},
+			removeTags: function()
+			{
+				while (tagsContainer.firstChild) 
+				{
+				    tagsContainer.removeChild(tagsContainer.firstChild);
+				}
+			},
+			applyTags: function(array_tags)
+			{
+				for (var i = 0; i < array_tags.length; i++) 
+				{
+					var lab = document.createElement("label");
+					lab.textContent = array_tags[i];
+					lab.id="opt_brate_l_"+array_tags[i];
+					var input = document.createElement("input");
+					input.name = "brate";
+					input.type="radio"; 
+					input.id="opt_brate_"+array_tags[i];
+					input.value = array_tags[i];
+					if(this.options_state && this.options_state.tag_selected === array_tags[i])
+						input.checked = "checked";
+					lab.appendChild(input);
+					tagsContainer.appendChild(lab);
+					tagsContainer.appendChild(document.createElement("br"));
+				}
+			}//,
 		},
 		options_state: {},
 		optionsUiChange: function(){
@@ -815,6 +857,13 @@
 		},
 		updateUIBusy: function(){
 			this.elements.toggleBusyAnimation(uiRadio.isRadioBusy());
+			for (var i = 0; i < this.options_state.tags.length; i++) 
+			{
+				var _thisselected = this.options_state.tag_selected !== undefined && this.options_state.tag_selected === this.options_state.tag_playing;
+				var lab = document.getElementById("opt_brate_l_"+this.options_state.tags[i])
+				lab.firstChild.textContent = (_thisselected?"[+] ":"[-] ") + this.options_state.tags[i];
+			}
+			
 		},
 		assignEvents: function(){
 			this.elements.volume_bar.
@@ -857,7 +906,7 @@
 				}
 				uiRadio.someStateChange();
 		    });
-		    this.elements.lastfmsessLink. // connect to LastFM
+		    this.elements.lastfmsessLinkdo. // connect to LastFM
 				addEventListener("click", function(e) {
 					portMocking.requestForLastFMSession();
 			});
@@ -966,8 +1015,21 @@
 			if(opts === null || opts === undefined)
 				return;
 
+			var shallowTags = this.options_state.tags;
 			this.options_state = opts;
+			this.options_state.tags = shallowTags;
 			this.elements.setOptions(opts);
+			if(shallowTags)
+			{
+				this.elements.removeTags();
+				this.elements.applyTags(shallowTags);
+				this.deferUpdateUiBusy();
+			}
+		},
+		optionTags: function(tags)
+		{
+			this.options_state.tags = tags;	
+			this.options(this.options_state);
 		}
 	};
 	var portMocking = {
@@ -1025,16 +1087,16 @@
 			else
 				self.port.emit('closeLastFMSession', {});
 		},
-		requestM3U: function(){
+		requestM3U: function(tag){
 			if(this.useMocking)
 			{
 				setTimeout(function(){
-					portMocking.responseM3U(200, {m3u: "http://nashe1.hostingradio.ru:80/ultra-192.mp3"});
+					portMocking.responseM3U(200, {m3u: "http://nashe1.hostingradio.ru:80/ultra-192.mp3", tag: tag});
 					// portMocking.responseM3U(200, {m3u: "http://94.25.53.132:80/ultra-128.mp3"});
 					// portMocking.responseM3U(200, {m3u: ["#", "http://193.35.52.62:8113/"].join("\n"), isShoutcastServer: true});
 				}, 2000);
 			}else{
-				self.port.emit('takem3u', {});
+				self.port.emit('takem3u', {tag: tag});
 			}
 		},
 		responseM3U: function(status, data){
@@ -1181,9 +1243,36 @@
 			uiRadio.scrobble(state.isAuthorised, state.name, new Date(state.at));
 			
 		},
+		takeTags: function()
+		{
+			if(this.useMocking)
+			{
+				setTimeout(function(){
+					portMocking.responseTags(200, {code: 200, tags: "128,96,HQ"})
+				},1000);
+			}else
+			{
+				self.port.emit('taketags', { });
+			}
+
+		},
+		responseTags: function(status, data)
+		{
+			if(data.code === 200)
+			{
+				console.log("got tags: ", data.tags);
+				var tags = data.tags.split(',');
+				uiRadio.optionTags(tags);
+			}
+			else
+			{
+				console.log("tags not optioned: ", data.tags);
+				uiRadio.optionTags([]);
+			}
+		}
 	};
 
-	portMocking.useMocking = false;
+	portMocking.useMocking = true;
 	if(!portMocking.useMocking)
 	{
 		self.port.on("LastFMStatus", function(obj){
@@ -1208,6 +1297,9 @@
 		self.port.on("options", function(obj){
 			portMocking.responseOptions(obj);
 		});
+		self.port.on("here_tags_darling", function(obj){
+			portMocking.responseTags(obj.code, obj.data);
+		});
 	}
 
 	Player.initialise();
@@ -1217,5 +1309,5 @@
     uiRadio.deferUpdateUi();
 
     portMocking.portLastFMStatus({isAuthorised: false, name: "unauthorised", at: new Date()});
-
+    portMocking.takeTags();
 // }());

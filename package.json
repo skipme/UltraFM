@@ -9,5 +9,15 @@
   "version": "0.2.7.3",
   "permissions": {
 	    "multiprocess": true
-	}
+	},
+   "locales": {
+        "ru-RU": {
+            "title": "Monstergenerator", 
+            "description": "Erstelle dein eigenes Monster"
+        },
+        "en-US": {
+            "title": "YS", 
+            "description": "US"
+        }
+    }
 }

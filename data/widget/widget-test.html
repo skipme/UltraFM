@@ -57,7 +57,7 @@
       outline: none;
       -moz-user-select: none;
   }
-  #createLastFMSession, #closeLastFMSession {
+  #createLastFMSession_do, #closeLastFMSession {
     cursor: pointer;
     text-decoration: underline;
   }
@@ -118,18 +118,26 @@
       </div>
 
     <div id="ff-opts" class="panel-hidden panel" style="font-family: track;margin: 0px 8px 8px; padding: 0px; " >
-    <p>Скробблинг LastFM:</p>
+    <p data-l10n-id="opt_lfm_scr">Скробблинг LastFM:</p>
       <dl>
-      <dt>Статус</dt>
-       <dd><a id="createLastFMSession">соединить с LastFM</a>
-       <br /><a id="closeLastFMSession" style="display: none">Закрыть сессию LastFM</a></dd>
-      <dt>Пользователь</dt>
+      <dt data-l10n-id="opt_lfm_status">Статус</dt>
+       <dd><a data-l10n-id="opt_lfm_connectcmd_do" id="createLastFMSession_do">соединить с LastFM</a>
+       <a data-l10n-id="opt_lfm_connectcmd_ok" id="createLastFMSession_ok" style="display: none">соединить с LastFM</a><a id="timecon"></a>
+       <br /><a data-l10n-id="opt_lfm_closesess" id="closeLastFMSession" style="display: none">Закрыть сессию LastFM</a></dd>
+      <dt data-l10n-id="opt_lfm_usr">Пользователь</dt>
        <dd><span id="lastfm-user"></span></dd>
     </dl>
-    <p>опции:</p>
+    <p data-l10n-id="opt_optt">опции:</p>
     <dl>
       <dt></dt>
-      <dd><label><input type="checkbox" id="opt_savesess" />Сохранять сессию LastFM (небезопасно)</label></dd>
+      <dd><label><input type="checkbox" id="opt_savesess" /><span data-l10n-id="opt_lfm_savesess">Сохранять сессию LastFM (небезопасно)</span></label></dd>
+
+      <dt>bitrate</dt>
+      <dd id="tagsContainer">
+      <label> <input name="brate" type="radio" id="opt_brate_64" />64</label>
+      <label><input name="brate" type="radio" id="opt_brate_128" />128</label>
+      <label><input name="brate" type="radio" id="opt_brate_360" />HQ</label>
+      </dd>
     </dl>
     </div>
 
@@ -142,7 +150,7 @@
   </div>
 
 
-  <!-- - ->
+  <!-- -->
   <script type="text/javascript" src="widget.js"></script><!--
   -->
 </body>
