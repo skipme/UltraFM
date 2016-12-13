@@ -825,7 +825,7 @@
 		},
 		options_state: {},
 		optionsUiChange: function(){
-			var optex = {saveLFMSess: (this.options_state.saveLFMSess || false), tag_selected: this.options_state.tag_selected}
+			var optex = {saveLFMSess: (this.options_state.saveLFMSess || false), tag_selected: this.options_state.tag_selected, volume_level:  this.options_state.volume_level}
 			portMocking.requestOptions(optex);
 			console.log("ui opts change", optex)
 		},
@@ -841,7 +841,7 @@
 			this.buttons.assignButtons();
 			this.elements.assignElements();
 			this.assignEvents();
-			this.setVolume(70);
+			// this.setVolume(70, false);
 		},
 		deferUpdateUi: function(){
 			setTimeout(function(){uiRadio.updateUI();}, 0);
@@ -876,7 +876,7 @@
 			
 		},
 		assignEvents: function(){
-			this.elements.volume_bar.
+			this.elements.volume_bar. // VOLUME CHANGED
 				addEventListener("change", function(e) {
 					var currentVolume = e.target.value;
 					uiRadio.setVolume(currentVolume, true);
@@ -1009,9 +1009,16 @@
 		},
 		setVolume: function(level, frombar){
 			if(!frombar)
+			{	
 				this.elements.volume_bar.value = level;
+				// return;
+			}
 			Player.setVolume(level);
+
 			this.elements.appearVolumeIcon();
+			this.options_state.volume_level = level;
+			if(frombar)
+				this.optionsUiChange();
 		},
 		scrobble: function(enable, name, at){
 			if( !this.allowedLASTFMSCROBBLEoption && enable )
@@ -1036,6 +1043,7 @@
 			this.options_state = opts;
 			this.options_state.tags = shallowTags;
 			this.elements.setOptions(opts);
+			this.setVolume(opts.volume_level || 44, false);
 			if(shallowTags)
 			{
 				this.elements.removeTags();
@@ -1057,6 +1065,7 @@
 		requestOptions: function(opts){
 			if(this.useMocking)
 			{
+				this.responseOptions({ saveLFMSess: false, tag_selected: "128", volume_level: 44 })
 			}else{
 				self.port.emit('options', opts);
 			}
@@ -1108,6 +1117,7 @@
 				self.port.emit('closeLastFMSession', {});
 		},
 		requestM3U: function(tag){
+			console.log("request m3u with tag ", tag);
 			if(this.useMocking)
 			{
 				setTimeout(function(){
@@ -1268,7 +1278,7 @@
 			if(this.useMocking)
 			{
 				setTimeout(function(){
-					portMocking.responseTags(200, {code: 200, tags: "128,96,HQ"})
+					portMocking.responseTags(200, { tags: "96,128,HQ" })
 				},1000);
 			}else
 			{
@@ -1278,7 +1288,7 @@
 		},
 		responseTags: function(status, data)
 		{
-			if(data.code === 200)
+			if(status === 200)
 			{
 				console.log("got tags: ", data.tags);
 				var tags = data.tags.split(',');
@@ -1292,7 +1302,9 @@
 		}
 	};
 
-	portMocking.useMocking = true;
+	portMocking.useMocking = 
+		false;
+		//true;
 	if(!portMocking.useMocking)
 	{
 		self.port.on("LastFMStatus", function(obj){
